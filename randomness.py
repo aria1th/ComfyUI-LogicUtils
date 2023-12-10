@@ -1,5 +1,10 @@
 import random
+from .autonode import node_wrapper, get_node_names_mappings
 
+classes = []
+node = node_wrapper(classes)
+
+@node
 class UniformRandomFloat:
     """
     Selects a random float from min to max
@@ -29,7 +34,8 @@ class UniformRandomFloat:
     RETURN_TYPES = ("FLOAT",)
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
-
+    custom_name = "Uniform Random Float"
+@node
 class UniformRandomInt:
     """
     Selects a random int from min to max
@@ -56,7 +62,8 @@ class UniformRandomInt:
     RETURN_TYPES = ("INT",)
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
-
+    custom_name = "Uniform Random Int"
+@node
 class UniformRandomChoice:
     """
     Parses input string with separator '$' and returns a random choice
@@ -81,7 +88,8 @@ class UniformRandomChoice:
     RETURN_TYPES = ("STRING",)
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
-
+    custom_name = "Uniform Random Choice"
+@node
 class ManualChoiceString:
     """
     Parses input string with separator '$' and returns a random choice
@@ -106,7 +114,8 @@ class ManualChoiceString:
     RETURN_TYPES = ("STRING",)
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
-
+    custom_name = "Manual Choice String"
+@node
 class ManualChoiceInt:
     """
     Parses input string with separator '$' and returns a random choice
@@ -132,7 +141,8 @@ class ManualChoiceInt:
     RETURN_TYPES = ("INT",)
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
-
+    custom_name = "Manual Choice Int"
+@node
 class ManualChoiceFloat:
     """
     Parses input string with separator '$' and returns a random choice
@@ -158,20 +168,6 @@ class ManualChoiceFloat:
     RETURN_TYPES = ("FLOAT",)
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
+    custom_name = "Manual Choice Float"
 
-CLASS_MAPPINGS = {
-    "UniformRandomFloat": UniformRandomFloat,
-    "UniformRandomInt": UniformRandomInt,
-    "UniformRandomChoice": UniformRandomChoice,
-    "ManualChoiceString": ManualChoiceString,
-    "ManualChoiceInt": ManualChoiceInt,
-    "ManualChoiceFloat": ManualChoiceFloat,
-}
-CLASS_NAMES = {
-    "UniformRandomFloat": "Uniform Random Float",
-    "UniformRandomInt": "Uniform Random Int",
-    "UniformRandomChoice": "Uniform Random Choice",
-    "ManualChoiceString": "Manual Choice String",
-    "ManualChoiceInt": "Manual Choice Int",
-    "ManualChoiceFloat": "Manual Choice Float",
-}
+CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(classes)
