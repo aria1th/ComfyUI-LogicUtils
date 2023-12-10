@@ -2,7 +2,7 @@
 Implements logic gate nodes
 """
 import re
-from .autonode import node_wrapper, get_node_names_mappings
+from .autonode import node_wrapper, get_node_names_mappings, validate
 
 
 classes = []
@@ -295,6 +295,7 @@ class StaticNumberFloat:
     }
     FUNCTION = "staticNumber"
     CATEGORY = "Logic Gates"
+    custom_name = "Static Number Float"
     def staticNumber(self, number):
         return number
 @node
@@ -470,3 +471,4 @@ class MergeString:
         return input1 + input2
 
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(classes)
+validate(classes)

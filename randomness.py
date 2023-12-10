@@ -1,5 +1,5 @@
 import random
-from .autonode import node_wrapper, get_node_names_mappings
+from .autonode import node_wrapper, get_node_names_mappings, validate
 
 classes = []
 node = node_wrapper(classes)
@@ -171,3 +171,4 @@ class ManualChoiceFloat:
     custom_name = "Manual Choice Float"
 
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(classes)
+validate(classes)
