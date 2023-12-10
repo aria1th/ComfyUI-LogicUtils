@@ -2,7 +2,7 @@
 Implements logic gate nodes
 """
 import re
-from .autonode import node_wrapper, get_node_names_mappings, validate
+from .autonode import node_wrapper, get_node_names_mappings, validate, anytype
 
 
 classes = []
@@ -469,6 +469,31 @@ class MergeString:
     custom_name = "Merge String"
     def merge(self, input1, input2):
         return (input1 + input2,)
+    
+@node
+class MemoryNode:
+    """
+    Stores a value in memory.
+    Flip-flop behaviour.
+    """
+    RETURN_TYPES = (anytype,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+        "required": {
+            "input1": (anytype, {"default": ""}),
+            "flag": (anytype, {"default": 0}),
+        }
+    }
+    FUNCTION = "memory"
+    CATEGORY = "Logic Gates"
+    custom_name = "Memory String"
+    def memory(self, input1, flag):
+        if flag:
+            self.memory_value = input1
+        return (self.memory_value,)
+
+
 
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(classes)
 validate(classes)

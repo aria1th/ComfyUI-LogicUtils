@@ -2,7 +2,7 @@
 Converts int / float / boolean
 Note that it depends on the order of the conversion
 """
-from .autonode import validate, node_wrapper, get_node_names_mappings
+from .autonode import validate, node_wrapper, get_node_names_mappings, anytype
 classes = []
 node = node_wrapper(classes)
 
@@ -34,6 +34,49 @@ def create_class(type_from, type_to):
     CustomClass.__name__ = class_name
     node(CustomClass)
     return CustomClass
+
+
+@node
+class StringListToCombo:
+    """
+    Converts raw string, separates with separator, then return as raw list
+    """
+    RETURN_TYPES = (anytype,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+        "required": {
+            "string": ("STRING", {"default": ""}),
+            "separator": ("STRING", {"default": "$"}),
+        }
+    }
+    FUNCTION = "stringListToCombo"
+    CATEGORY = "Logic Gates"
+    custom_name = "String List to Combo"
+    def stringListToCombo(self, string, separator):
+        return (string.split(separator),)
+
+@node
+class ConvertComboToString:
+    """
+    Converts raw list to string, separated with separator
+    """
+    RETURN_TYPES = ("STRING",)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+        "required": {
+            "combo": (anytype, {"default": []}),
+            "separator": ("STRING", {"default": "$"}),
+        }
+    }
+    FUNCTION = "convertComboToString"
+    CATEGORY = "Logic Gates"
+    custom_name = "Convert Combo to String"
+    def convertComboToString(self, combo, separator):
+        if isinstance(combo, (str, float, int, bool)):
+            return (combo,)
+        return (separator.join(combo),)
 
 for type_from in conversion_operators:
     for type_to in conversion_operators:
