@@ -290,6 +290,10 @@ class YieldableIteratorInt:
     Yields sequentially with start, end, step
     Resets if reset is True
     """
+    RETURN_TYPES = ("INT",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Yieldable (Sequential) Iterator Int"
     def __init__(self):
         self.iterator = None
     def generate(self, start, end, step, reset):
