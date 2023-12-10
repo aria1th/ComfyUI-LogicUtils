@@ -17,7 +17,7 @@ def create_class(type_from, type_to):
         return None
     class_name = "{}2{}".format(type_from, type_to)
     class CustomClass:
-        FUNCTION = class_name.lower()
+        FUNCTION = "convert"
         RETURN_TYPES = (type_to.upper(),)
         CATEGORY = "Conversion"
         custom_name = "Convert {} to {}".format(type_from, type_to)
