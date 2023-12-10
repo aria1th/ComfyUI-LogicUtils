@@ -170,5 +170,149 @@ class ManualChoiceFloat:
     CATEGORY = "Logic Gates"
     custom_name = "Manual Choice Float"
 
+@node
+class RandomShuffleInt:
+    """
+    Get the shuffled list of integers from start to end
+    Input types and output types are lists of ints
+    """
+    def __init__(self):
+        pass
+    def generate(self, input_string, separator, seed=0):
+        instance = random.Random(seed)
+        choices = input_string.split(separator)
+        # shuffle the list
+        instance.shuffle(choices)
+        return (choices,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "input_string": ("STRING", { "default": "1$2$3", "display": "text" }),
+                "separator": ("STRING", { "default": "$", "display": "text" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
+            },
+        }
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Random Shuffle Int"
+@node
+class RandomShuffleFloat:
+    """
+    Get the shuffled list of floats from start to end
+    Input types and output types are lists of floats
+    """
+    def __init__(self):
+        pass
+    def generate(self, input_string, separator, seed=0):
+        instance = random.Random(seed)
+        choices = input_string.split(separator)
+        # shuffle the list
+        instance.shuffle(choices)
+        return (choices,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "input_string": ("STRING", { "default": "1.0$2.0$3.0", "display": "text" }),
+                "separator": ("STRING", { "default": "$", "display": "text" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
+            },
+        }
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Random Shuffle Float"
+@node
+class RandomShuffleString:
+    """
+    Get the shuffled list of strings from start to end
+    Input types and output types are lists of strings
+    """
+    def __init__(self):
+        pass
+    def generate(self, input_string, separator, seed=0):
+        instance = random.Random(seed)
+        choices = input_string.split(separator)
+        # shuffle the list
+        instance.shuffle(choices)
+        return (choices,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "input_string": ("STRING", { "default": "a$b$c", "display": "text" }),
+                "separator": ("STRING", { "default": "$", "display": "text" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
+            },
+        }
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Random Shuffle String"
+
+@node
+class YieldableIteratorString:
+    """
+    Yields sequentially from the input list (with separator)
+    If reset is True, then it starts from the beginning
+    """
+    def __init__(self):
+        self.index = 0
+    def generate(self, input_string, separator, reset):
+        choices = input_string.split(separator)
+        if reset:
+            self.index = 0
+        else:
+            self.index += 1
+        if self.index >= len(choices):
+            self.index = 0
+        value = choices[self.index]
+        return (value,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "input_string": ("STRING", { "default": "a$b$c", "display": "text" }),
+                "separator": ("STRING", { "default": "$", "display": "text" }),
+                "reset": ("INT", { "default": 0, "min": 0, "max": 1, "step": 1, "display": "number" }),
+            },
+        }
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Yieldable Iterator String"
+
+@node
+class YieldableIteratorInt:
+    """
+    Yields sequentially with start, end, step
+    Resets if reset is True
+    """
+    def __init__(self):
+        self.iterator = None
+    def generate(self, start, end, step, reset):
+        if reset:
+            self.iterator = None
+        if self.iterator is None:
+            self.iterator = range(start, end, step)
+        try:
+            value = next(self.iterator)
+        except StopIteration:
+            self.iterator = range(start, end, step)
+            value = next(self.iterator)
+        return (value,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "start": ("INT", { "default": 0, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
+                "end": ("INT", { "default": 10, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
+                "step": ("INT", { "default": 1, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
+                "reset": ("INT", { "default": 0, "min": 0, "max": 1, "step": 1, "display": "number" }),
+            },
+        }
+
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(classes)
 validate(classes)
