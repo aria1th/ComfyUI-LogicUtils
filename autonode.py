@@ -44,4 +44,4 @@ class AllTrue(str):
         return self.repr
     def __eq__(self, __value: object) -> bool:
         return True
-anytype = AllTrue("variable") # when a != b is called, it will always return False
+anytype = AllTrue("*") # when a != b is called, it will always return False

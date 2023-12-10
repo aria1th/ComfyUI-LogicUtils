@@ -39,7 +39,7 @@ def create_class(type_from, type_to):
 @node
 class StringListToCombo:
     """
-    Converts raw string, separates with separator, then return as raw list
+    Converts raw string, separates with separator, then picks the first element or the element at index
     """
     RETURN_TYPES = (anytype,)
     @classmethod
@@ -48,13 +48,24 @@ class StringListToCombo:
         "required": {
             "string": ("STRING", {"default": ""}),
             "separator": ("STRING", {"default": "$"}),
+        },
+        "optional": {
+            "index": ("INT", {"default": 0}),
         }
     }
     FUNCTION = "stringListToCombo"
     CATEGORY = "Logic Gates"
     custom_name = "String List to Combo"
-    def stringListToCombo(self, string, separator):
-        return (string.split(separator),)
+    def stringListToCombo(self, string, separator, index = 0):
+        if isinstance(string, (float, int, bool)):
+            return (string,)
+        if separator == "" or separator == None or separator not in string:
+            return (string,)
+        # check length
+        splitted = string.split(separator)
+        if index >= len(splitted):
+            return (splitted[-1],)
+        return (splitted[index],)
 
 @node
 class ConvertComboToString:

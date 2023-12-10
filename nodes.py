@@ -61,6 +61,24 @@ class ErrorNode:
             }
         }
 
+@fundamental_node
+class DebugComboInputNode:
+    FUNCTION = "debug_combo_input"
+    RETURN_TYPES = ("STRING",)
+    CATEGORY = "Misc"
+    custom_name = "Debug Combo Input"
+    @staticmethod
+    def debug_combo_input(input1):
+        print(input1)
+        return (input1,)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "input1": (["0", "1", "2"], { "default": "0" }),
+            }
+        }
+
 # https://github.com/comfyanonymous/ComfyUI/blob/340177e6e85d076ab9e222e4f3c6a22f1fb4031f/custom_nodes/example_node.py.example#L18
 @fundamental_node
 class TextPreviewNode:
