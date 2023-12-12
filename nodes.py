@@ -2,6 +2,7 @@
 from .logic_gates import CLASS_MAPPINGS as LogicMapping, CLASS_NAMES as LogicNames
 from .randomness import CLASS_MAPPINGS as RandomMapping, CLASS_NAMES as RandomNames
 from .conversion import CLASS_MAPPINGS as ConversionMapping, CLASS_NAMES as ConversionNames
+from .exif.exif import read_info_from_image_stealth
 from .autonode import node_wrapper, get_node_names_mappings, validate
 import time
 
@@ -104,6 +105,27 @@ class TextPreviewNode:
                 "text": ("STRING",{"default": "text"}),
             }
         }
+
+@fundamental_node
+class ParseExifNode:
+    """
+    Parses exif data from image
+    """
+    FUNCTION = "parse_exif"
+    RETURN_TYPES = ("STRING",)
+    CATEGORY = "Misc"
+    custom_name = "Parse Exif"
+    @staticmethod
+    def parse_exif(image):
+        return (read_info_from_image_stealth(image),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            }
+        }
+
 
 classes_parsed, node_names_parsed = get_node_names_mappings(fundamental_classes)
 validate(fundamental_classes)

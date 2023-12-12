@@ -476,6 +476,8 @@ class MemoryNode:
     Stores a value in memory.
     Flip-flop behaviour.
     """
+    def __init__(self):
+        self.memory_value = None
     RETURN_TYPES = (anytype,)
     @classmethod
     def INPUT_TYPES(s):
@@ -489,7 +491,7 @@ class MemoryNode:
     CATEGORY = "Logic Gates"
     custom_name = "Memory String"
     def memory(self, input1, flag):
-        if flag:
+        if self.memory_value is None or flag:
             self.memory_value = input1
         return (self.memory_value,)
 
