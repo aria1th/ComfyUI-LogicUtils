@@ -9,76 +9,58 @@ classes = []
 node = node_wrapper(classes)
 
 @node
-class LogicGateCompareFloat:
+class LogicGateCompare:
     """
     Returns 1 if input1 > input2, 0 otherwise
     """
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = ("BOOL",)
     @classmethod
     def INPUT_TYPES(s):
         return {
         "required": {
-            "input1": ("FLOAT", {"default": 0.0}),
-            "input2": ("FLOAT", {"default": 0.0}),
+            "input1": (anytype, {"default": 0.0}),
+            "input2": (anytype, {"default": 0.0}),
         }
     }
     FUNCTION = "compareFloat"
     CATEGORY = "Logic Gates"
-    custom_name = "ABiggerThanB(Float)"
+    custom_name = "ABiggerThanB"
     def compareFloat(self, input1, input2):
-        return (1.0 if input1 > input2 else 0.0,)
+        return (True if input1 > input2 else False,)
 @node
 class LogicGateInvertBasic:
     """
     Inverts 1 to 0 and 0 to 1
     """
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = (anytype,)
     @classmethod
     def INPUT_TYPES(s):
         return {
         "required": {
-            "input1": ("INT", {"default": 0}),
+            "input1": (anytype, {"default": 0}),
         }
     }
     FUNCTION = "invert"
     CATEGORY = "Logic Gates"
     custom_name = "Invert Basic"
     def invert(self, input1):
-        return (1 if input1 == 0 else 0,)
+        return (True if not input1 else False,)
 @node
-class LogicGateInvertValueInt:
+class LogicGateNegateValue:
     """
     Inverts x -> -x
     """
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = (anytype,)
     @classmethod
     def INPUT_TYPES(s):
         return {
         "required": {
-            "input1": ("INT", {"default": 0}),
+            "input1": (anytype, {"default": 0}),
         }
     }
     FUNCTION = "invertValue"
     CATEGORY = "Logic Gates"
-    custom_name = "Invert Value Int"
-    def invertValue(self, input1):
-        return (-input1,)
-@node
-class LogicGateInvertValueFloat:
-    """
-    Inverts x -> -x
-    """
-    RETURN_TYPES = ("FLOAT",)
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-        "required": {
-            "input1": ("FLOAT", {"default": 0.0}),
-        }
-    }
-    FUNCTION = "invertValue"
-    CATEGORY = "Logic Gates"
-    custom_name = "Invert Value Float"
+    custom_name = "Negate Value"
     def invertValue(self, input1):
         return (-input1,)
 @node
@@ -185,30 +167,30 @@ class LogicGateBitwiseNot:
     def bitwiseNot(self, input1):
         return (~input1,)
 @node
-class LogicGateCompareInt:
+class LogicGateCompare:
     """
     Returns 1 if input1 > input2, 0 otherwise
     """
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = ("BOOL",)
     @classmethod
     def INPUT_TYPES(s):
         return {
         "required": {
-            "input1": ("INT", {"default": 0}),
-            "input2": ("INT", {"default": 0}),
+            "input1": (anytype, {"default": 0}),
+            "input2": (anytype, {"default": 0}),
         }
     }
     FUNCTION = "compareInt"
     CATEGORY = "Logic Gates"
-    custom_name = "ABiggerThanB(Int)"
+    custom_name = "ABiggerThanB"
     def compareInt(self, input1, input2):
-        return (1 if input1 > input2 else 0,)
+        return (True if input1 > input2 else False,)
 @node
 class LogicGateCompareString:
     """
     Returns if given regex (1) is found in given string (2)
     """
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = ("BOOL",)
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -221,47 +203,7 @@ class LogicGateCompareString:
     CATEGORY = "Logic Gates"
     custom_name = "AContainsB(String)"
     def compareString(self, regex, input2):
-        return (1 if re.search(regex, input2) else 0,)
-@node
-class LogicGateEitherFloat:
-    """
-    Returns input1 if condition is true, input2 otherwise
-    """
-    RETURN_TYPES = ("FLOAT",)
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-        "required": {
-            "condition": ("INT", {"default": 0}),
-            "input1": ("FLOAT", {"default": 0}),
-            "input2": ("FLOAT", {"default": 0}),
-        }
-    }
-    FUNCTION = "either"
-    CATEGORY = "Logic Gates"
-    custom_name = "ConditionAorB(Float)"
-    def either(self, condition, input1, input2):
-        return (input1 if condition else input2,)
-@node
-class LogicGateEitherInt:
-    """
-    Returns input1 if condition is true, input2 otherwise
-    """
-    RETURN_TYPES = ("INT",)
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-        "required": {
-            "condition": ("INT", {"default": 0}),
-            "input1": ("INT", {"default": 0}),
-            "input2": ("INT", {"default": 0}),
-        }
-    }
-    FUNCTION = "either"
-    CATEGORY = "Logic Gates"
-    custom_name = "ConditionAorB(Int)"
-    def either(self, condition, input1, input2):
-        return (input1 if condition else input2,)
+        return (True if re.search(regex, input2) else False,)
 @node
 class StaticNumberInt:
     """
@@ -317,137 +259,80 @@ class StaticString:
     def staticString(self, string):
         return (string,)
 @node
-class LogicGateAndInt:
+class LogicGateAnd:
     """
     Returns 1 if all inputs are True, 0 otherwise
     """
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = ("BOOL",)
     @classmethod
     def INPUT_TYPES(s):
         return {
         "required": {
-            "input1": ("INT", {"default": 0}),
-            "input2": ("INT", {"default": 0}),
+            "input1": (anytype, {"default": 0.0}),
+            "input2": (anytype, {"default": 0.0}),
         }
     }
     FUNCTION = "and_"
     CATEGORY = "Logic Gates"
-    custom_name = "And Int"
+    custom_name = "AAndBGate"
     def and_(self, input1, input2):
-        return (1 if input1 and input2 else 0,)
+        return (True if input1 and input2 else False,)
 @node
-class LogicGateAndFloat:
-    """
-    Returns 1 if all inputs are True, 0 otherwise
-    """
-    RETURN_TYPES = ("INT",)
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-        "required": {
-            "input1": ("FLOAT", {"default": 0.0}),
-            "input2": ("FLOAT", {"default": 0.0}),
-        }
-    }
-    FUNCTION = "and_"
-    CATEGORY = "Logic Gates"
-    custom_name = "And Float"
-    def and_(self, input1, input2):
-        return (1 if input1 and input2 else 0,)
-@node
-class LogicGateOrInt:
+class LogicGateOr:
     """
     Returns 1 if any input is True, 0 otherwise
     """
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = ("BOOL",)
     @classmethod
     def INPUT_TYPES(s):
         return {
         "required": {
-            "input1": ("INT", {"default": 0}),
-            "input2": ("INT", {"default": 0}),
+            "input1": (anytype, {"default": 0}),
+            "input2": (anytype, {"default": 0}),
         }
     }
     FUNCTION = "or_"
     CATEGORY = "Logic Gates"
-    custom_name = "Or Int"
+    custom_name = "AOrBGate"
     def or_(self, input1, input2):
-        return (1 if input1 and input2 else 0,)
+        return (True if input1 and input2 else False,)
 @node
-class LogicGateOrFloat:
-    """
-    Returns 1 if any input is True, 0 otherwise
-    """
-    RETURN_TYPES = ("INT",)
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-        "required": {
-            "input1": ("FLOAT", {"default": 0.0}),
-            "input2": ("FLOAT", {"default": 0.0}),
-        }
-    }
-    FUNCTION = "or_"
-    CATEGORY = "Logic Gates"
-    custom_name = "Or Float"
-    def or_(self, input1, input2):
-        return (1 if input1 and input2 else 0,)
-@node
-class LogicGateEitherString:
+class LogicGateEither:
     """
     Returns input1 if condition is true, input2 otherwise
     """
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = (anytype,)
     @classmethod
     def INPUT_TYPES(s):
         return {
         "required": {
-            "condition": ("INT", {"default": 0}),
-            "input1": ("STRING", {"default": ""}),
-            "input2": ("STRING", {"default": ""}),
+            "condition": (anytype, {"default": 0}),
+            "input1": (anytype, {"default": ""}),
+            "input2": (anytype, {"default": ""}),
         }
     }
     FUNCTION = "either"
     CATEGORY = "Logic Gates"
-    custom_name = "Either String"
+    custom_name = "ReturnAorBValue"
     def either(self, condition, input1, input2):
         return (input1 if condition else input2,)
 @node
-class AddInt:
+class AddNode:
     """
     Returns the sum of the inputs
     """
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = (anytype,)
     @classmethod
     def INPUT_TYPES(s):
         return {
         "required": {
-            "input1": ("INT", {"default": 0}),
-            "input2": ("INT", {"default": 0}),
+            "input1": (anytype, {"default": 0}),
+            "input2": (anytype, {"default": 0}),
         }
     }
     FUNCTION = "add"
     CATEGORY = "Logic Gates"
-    custom_name = "Add Int"
-    def add(self, input1, input2):
-        return (input1 + input2,)
-@node
-class AddFloat:
-    """
-    Returns the sum of the inputs
-    """
-    RETURN_TYPES = ("FLOAT",)
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-        "required": {
-            "input1": ("FLOAT", {"default": 0.0}),
-            "input2": ("FLOAT", {"default": 0.0}),
-        }
-    }
-    FUNCTION = "add"
-    CATEGORY = "Logic Gates"
-    custom_name = "Add Float"
+    custom_name = "Add Values"
     def add(self, input1, input2):
         return (input1 + input2,)
 @node
@@ -460,15 +345,15 @@ class MergeString:
     def INPUT_TYPES(s):
         return {
         "required": {
-            "input1": ("STRING", {"default": ""}),
-            "input2": ("STRING", {"default": ""}),
+            "input1": (anytype, {"default": ""}),
+            "input2": (anytype, {"default": ""}),
         }
     }
     FUNCTION = "merge"
     CATEGORY = "Logic Gates"
     custom_name = "Merge String"
     def merge(self, input1, input2):
-        return (input1 + input2,)
+        return (str(input1) + str(input2),)
     
 @node
 class MemoryNode:

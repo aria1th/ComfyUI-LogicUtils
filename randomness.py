@@ -25,8 +25,8 @@ class UniformRandomFloat:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "min_val": ("FLOAT", { "default": 0.0, "min": 0.0, "max": 1000.0, "step": 0.02, "display": "number" }),
-                "max_val": ("FLOAT", { "default": 1.0, "min": 0.0, "max": 1000.0, "step": 0.02, "display": "number" }),
+                "min_val": ("FLOAT", { "default": 0.0, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
+                "max_val": ("FLOAT", { "default": 1.0, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
                 "decimal_places": ("INT", { "default": 1, "min": 0, "max": 10, "step": 1, "display": "number" }),
                 "seed" : ("INT", { "default": 0, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
             },
@@ -54,8 +54,8 @@ class UniformRandomInt:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "min_val": ("INT", { "default": 0, "min": 0, "max": 1000, "step": 1, "display": "number" }),
-                "max_val": ("INT", { "default": 1, "min": 0, "max": 1000, "step": 1, "display": "number" }),
+                "min_val": ("INT", { "default": 0, "min": -999999999, "max": 999999999, "step": 1, "display": "number" }),
+                "max_val": ("INT", { "default": 1, "min": -999999999, "max": 999999999, "step": 1, "display": "number" }),
                 "seed" : ("INT", { "default": 0, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
             },
         }

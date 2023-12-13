@@ -4,7 +4,7 @@ from .randomness import CLASS_MAPPINGS as RandomMapping, CLASS_NAMES as RandomNa
 from .conversion import CLASS_MAPPINGS as ConversionMapping, CLASS_NAMES as ConversionNames
 from .math_nodes import CLASS_MAPPINGS as MathMapping, CLASS_NAMES as MathNames
 from .exif.exif import read_info_from_image_stealth
-from .autonode import node_wrapper, get_node_names_mappings, validate
+from .autonode import node_wrapper, get_node_names_mappings, validate, anytype
 import time
 
 fundamental_classes = []
@@ -30,19 +30,19 @@ class SleepNodeFloat:
 @fundamental_node
 class SleepNodeImage:
     FUNCTION = "sleep"
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = (anytype,)
     CATEGORY = "Misc"
     custom_name = "Sleep (Image tunnel)"
     @staticmethod
     def sleep(interval, image):
         time.sleep(interval)
-        return (None,)
+        return (image,)
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
                 "interval": ("FLOAT", {"default": 0.0}),
-                "image": ("IMAGE",),
+                "image": (anytype,),
             }
         }
 
@@ -90,20 +90,18 @@ class TextPreviewNode:
     FUNCTION = "text_preview"
     RETURN_TYPES = ()
     CATEGORY = "Misc"
-    OUTPUT_NODE = True
     custom_name = "Text Preview"
-    def __init__(self) -> None:
-        self.type = "output"
+    RESULT_NODE = True
 
     def text_preview(self, text):
         print(text)
         # below does not work, why?
-        return {"ui": {"text": text}}
+        return {"ui": {"text": str(text)}}
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "text": ("STRING",{"default": "text"}),
+                "text": (anytype,{"default": "text"}),
             }
         }
 

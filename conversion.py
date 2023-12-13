@@ -12,15 +12,13 @@ conversion_operators = {
     "Bool" : bool,
     "String" : str
 }
-def create_class(type_from, type_to):
-    if type_from == type_to:
-        return None
-    class_name = "{}2{}".format(type_from, type_to)
+def create_class(type_to):
+    class_name = "ConvertAny2{}".format(type_to)
     class CustomClass:
         FUNCTION = "convert"
         RETURN_TYPES = (type_to.upper(),)
         CATEGORY = "Conversion"
-        custom_name = "Convert {} to {}".format(type_from, type_to)
+        custom_name = "Convert to {}".format(type_to)
         @staticmethod
         def convert(input1):
             return (conversion_operators[type_to](input1),)
@@ -28,7 +26,7 @@ def create_class(type_from, type_to):
         def INPUT_TYPES(cls):
             return {
             "required": {
-                "input1": (type_from.upper(), {"default": 0.0}),
+                "input1": (anytype, {"default": 0.0}),
             }
         }
     CustomClass.__name__ = class_name
@@ -89,9 +87,8 @@ class ConvertComboToString:
             return (combo,)
         return (separator.join(combo),)
 
-for type_from in conversion_operators:
-    for type_to in conversion_operators:
-        create_class(type_from, type_to)
+for type_to in conversion_operators:
+    create_class(type_to)
 
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(classes)
 validate(classes)
