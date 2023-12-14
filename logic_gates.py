@@ -354,6 +354,28 @@ class MergeString:
     custom_name = "Merge String"
     def merge(self, input1, input2):
         return (str(input1) + str(input2),)
+
+@node
+class ReplaceString:
+    """
+    Returns the concatenation of the inputs
+    """
+    RETURN_TYPES = ("STRING",)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+        "required": {
+            "String": ("STRING", {"default": ""}),
+            "Regex": ("STRING", {"default": ""}),
+            "ReplaceWith": ("STRING", {"default": ""}),
+        }
+    }
+    FUNCTION = "replace"
+    CATEGORY = "Logic Gates"
+    custom_name = "Replace String"
+    def replace(self, String, Regex, ReplaceWith):
+        # using regex
+        return (re.sub(Regex, ReplaceWith, String),)
     
 @node
 class MemoryNode:
