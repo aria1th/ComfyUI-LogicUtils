@@ -39,13 +39,6 @@ def read_info_from_image_stealth(image):
         image = image.cpu().numpy() #((1, 1, 1280, 3), '<f4')
         image = image[0].astype('uint8') #((1, 1280, 3), 'uint8')
         image = Image.fromarray(image)
-    geninfo, items = read_info_from_image(image)
-    # possible_sigs = {'stealth_pnginfo', 'stealth_pngcomp', 'stealth_rgbinfo', 'stealth_rgbcomp'}
-
-    # respecting original pnginfo
-    if geninfo is not None:
-        return geninfo
-
     # trying to read stealth pnginfo
     width, height = image.size
     pixels = image.load()
@@ -63,6 +56,7 @@ def read_info_from_image_stealth(image):
     reading_param_len = False
     reading_param = False
     read_end = False
+    never_confirmed = True
     for x in range(width):
         for y in range(height):
             if has_alpha:
@@ -76,10 +70,13 @@ def read_info_from_image_stealth(image):
             buffer_rgb += str(b & 1)
             index_rgb += 3
             if confirming_signature:
+                if x * height + y > 120 and never_confirmed:
+                    return ''
                 if index_a == len('stealth_pnginfo') * 8:
                     decoded_sig = bytearray(int(buffer_a[i:i + 8], 2) for i in
                                             range(0, len(buffer_a), 8)).decode('utf-8', errors='ignore')
                     if decoded_sig in {'stealth_pnginfo', 'stealth_pngcomp'}:
+                        #print(f"Found signature at {x}, {y}")
                         confirming_signature = False
                         sig_confirmed = True
                         reading_param_len = True
@@ -88,6 +85,7 @@ def read_info_from_image_stealth(image):
                             compressed = True
                         buffer_a = ''
                         index_a = 0
+                        never_confirmed = False
                     else:
                         read_end = True
                         break
@@ -95,6 +93,7 @@ def read_info_from_image_stealth(image):
                     decoded_sig = bytearray(int(buffer_rgb[i:i + 8], 2) for i in
                                             range(0, len(buffer_rgb), 8)).decode('utf-8', errors='ignore')
                     if decoded_sig in {'stealth_rgbinfo', 'stealth_rgbcomp'}:
+                        #print(f"Found signature at {x}, {y}")
                         confirming_signature = False
                         sig_confirmed = True
                         reading_param_len = True
@@ -103,6 +102,7 @@ def read_info_from_image_stealth(image):
                             compressed = True
                         buffer_rgb = ''
                         index_rgb = 0
+                        never_confirmed = False
             elif reading_param_len:
                 if mode == 'alpha':
                     if index_a == 32:
@@ -140,6 +140,7 @@ def read_info_from_image_stealth(image):
                 break
         if read_end:
             break
+    geninfo = ''
     if sig_confirmed and binary_data != '':
         # Convert binary string to UTF-8 encoded text
         byte_data = bytearray(int(binary_data[i:i + 8], 2) for i in range(0, len(binary_data), 8))

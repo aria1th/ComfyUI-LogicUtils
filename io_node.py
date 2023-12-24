@@ -100,6 +100,7 @@ class TextPreviewNode:
     CATEGORY = "Misc"
     custom_name = "Text Preview"
     RESULT_NODE = True
+    OUTPUT_NODE = True
 
     def text_preview(self, text):
         print(text)
