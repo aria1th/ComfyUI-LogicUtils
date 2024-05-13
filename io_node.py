@@ -231,5 +231,60 @@ class SaveTextCustomNode:
         counter += 1
 
         return { "ui": { "texts": results }, "outputs": { "images": file.rstrip('.txt') } }
+    
+@fundamental_node
+class SaveImageWebpCustomNode:
+    def __init__(self):
+        self.output_dir = folder_paths.get_output_directory()
+        self.type = "output"
+        self.prefix_append = ""
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": 
+                    {"images": ("IMAGE", ),
+                     "filename_prefix": ("STRING", {"default": "ComfyUI"}),
+                     "subfolder_dir": ("STRING", {"default": ""}),
+                     },
+                 "optional": {"quality": ("INT", {"default": 100}), "lossless": ("BOOL", {"default": False}), "compression": ("INT", {"default": 4}), "optimize": ("BOOL", {"default": False})},
+                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
+                }
+
+    RETURN_TYPES = ("STRING",) #Filename
+    FUNCTION = "save_images"
+
+    OUTPUT_NODE = True
+
+    CATEGORY = "image"
+    custom_name = "Save Image Webp Node" 
+
+    def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None, quality=100, lossless=False, compression=4, optimize=False):
+        filename_prefix += self.prefix_append
+        output_dir = os.path.join(self.output_dir, subfolder_dir)
+        full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0])
+        results = list()
+        for image in images:
+            i = 255. * image.cpu().numpy()
+            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+            metadata = None
+            if not args.disable_metadata:
+                metadata = PngInfo()
+                if prompt is not None:
+                    metadata.add_text("prompt", json.dumps(prompt))
+                if extra_pnginfo is not None:
+                    for x in extra_pnginfo:
+                        metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+
+            file = f"{filename}_{counter:05}_.png"
+            img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=compression, quality=quality, lossless=lossless, optimize=optimize)
+            results.append({
+                "filename": os.path.join(full_output_folder, file),
+                "subfolder": subfolder_dir,
+                "type": self.type
+            })
+            counter += 1
+
+        return { "ui": { "images": results }, "outputs": { "images": os.path.join(full_output_folder, file).rstrip('.webp') } }
+
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(fundamental_classes)
 validate(fundamental_classes)
