@@ -1,14 +1,14 @@
 [project]
 name = "comfyui-logicutils"
-description = "Nodes:UniformRandomFloat..., RandomShuffleInt, YieldableIterator..., LogicGate..., Add..., MergeString, MemoryNode, ..."
-version = "1.0.0"
-license = "LICENSE"
+description = "Logical Utils (compare, string, boolean operations) for ComfyUI"
+version = "1.0.1"
+license = "MIT"
 
 [project.urls]
 Repository = "https://github.com/aria1th/ComfyUI-LogicUtils"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = ""
+PublisherId = "angelbottomless"
 DisplayName = "ComfyUI-LogicUtils"
 Icon = ""
