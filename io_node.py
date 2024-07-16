@@ -10,6 +10,7 @@ from .autonode import node_wrapper, get_node_names_mappings, validate, anytype, 
 import time
 import os
 from PIL import Image
+from PIL import ImageOps
 from PIL import ImageEnhance
 from PIL.PngImagePlugin import PngInfo
 import piexif
@@ -363,6 +364,24 @@ class ResizeImageResolution:
                 "resolution": ("INT", {"default": 512}),
                 "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
             },
+        }
+@fundamental_node
+class InvertImageNode:
+    FUNCTION = "invert_image"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Invert Image"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def invert_image(image):
+        image = PILHandlingHodes.handle_input(image)
+        return (ImageOps.invert(image),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            }
         }
 
 @fundamental_node
