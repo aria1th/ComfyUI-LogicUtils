@@ -88,3 +88,4 @@ class AllTrue(str):
     def __eq__(self, __value: object) -> bool:
         return True
 anytype = AllTrue("*") # when a != b is called, it will always return False
+PILImage = object() # dummy object to represent PIL.Image

@@ -2,13 +2,17 @@
 
 import json
 import numpy as np
+import piexif.helper
 
 from .exif.exif import read_info_from_image_stealth
-from .autonode import node_wrapper, get_node_names_mappings, validate, anytype
+from .imgio.converter import IOConverter, PILHandlingHodes
+from .autonode import node_wrapper, get_node_names_mappings, validate, anytype, PILImage
 import time
 import os
 from PIL import Image
+from PIL import ImageEnhance
 from PIL.PngImagePlugin import PngInfo
+import piexif
 import folder_paths
 from comfy.cli_args import args
 
@@ -231,7 +235,7 @@ class SaveTextCustomNode:
         counter += 1
 
         return { "ui": { "texts": results }, "outputs": { "images": file.rstrip('.txt') } }
-    
+
 @fundamental_node
 class SaveImageWebpCustomNode:
     def __init__(self):
@@ -246,7 +250,7 @@ class SaveImageWebpCustomNode:
                      "filename_prefix": ("STRING", {"default": "ComfyUI"}),
                      "subfolder_dir": ("STRING", {"default": ""}),
                      },
-                 "optional": {"quality": ("INT", {"default": 100}), "lossless": ("BOOL", {"default": False}), "compression": ("INT", {"default": 4}), "optimize": ("BOOL", {"default": False})},
+                 "optional": {"quality": ("INT", {"default": 100}), "lossless": ("BOOL", {"default": False}), "compression": ("INT", {"default": 4}), "optimize": ("BOOL", {"default": False}), "metadata_string": ("STRING", {"default": ""})},
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
                 }
 
@@ -258,7 +262,7 @@ class SaveImageWebpCustomNode:
     CATEGORY = "image"
     custom_name = "Save Image Webp Node" 
 
-    def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None, quality=100, lossless=False, compression=4, optimize=False):
+    def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None, quality=100, lossless=False, compression=4, optimize=False, metadata_string=""):
         filename_prefix += self.prefix_append
         output_dir = os.path.join(self.output_dir, subfolder_dir)
         full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0])
@@ -268,15 +272,25 @@ class SaveImageWebpCustomNode:
             img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
             metadata = None
             if not args.disable_metadata:
-                metadata = PngInfo()
+                metadata = {}
                 if prompt is not None:
-                    metadata.add_text("prompt", json.dumps(prompt))
+                    metadata["prompt"] = json.dumps(prompt)
                 if extra_pnginfo is not None:
                     for x in extra_pnginfo:
-                        metadata.add_text(x, json.dumps(extra_pnginfo[x]))
-
+                        metadata[x] = json.dumps(extra_pnginfo[x])
+            if metadata_string:# override metadata
+                metadata = {}
+                metadata["metadata"]= metadata_string
+            exif_bytes = piexif.dump({
+                "Exif": {
+                    piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(json.dumps(metadata) or "", encoding="unicode")
+                },
+            })
             file = f"{filename}_{counter:05}_.webp"
             img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=compression, quality=quality, lossless=lossless, optimize=optimize)
+            
+            piexif.insert(exif_bytes, os.path.join(full_output_folder, file))
+            
             results.append({
                 "filename": os.path.join(full_output_folder, file),
                 "subfolder": subfolder_dir,
@@ -285,6 +299,330 @@ class SaveImageWebpCustomNode:
             counter += 1
 
         return { "ui": { "images": results }, "outputs": { "images": os.path.join(full_output_folder, file).rstrip('.webp') } }
+
+@fundamental_node
+class ResizeImageNode:
+    FUNCTION = "resize_image"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Resize Image"
+    
+    constants = {
+        "NEAREST": Image.Resampling.NEAREST,
+        "LANCZOS": Image.Resampling.LANCZOS,
+        "BICUBIC": Image.Resampling.BICUBIC,
+    }
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def resize_image(image, width, height, method):
+        image = PILHandlingHodes.handle_input(image)
+        return (image.resize((width, height), ResizeImageNode.constants[method]),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "size": ("INT", {"default": 512}),
+                "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
+            },
+        }
+
+@fundamental_node
+class ResizeImageResolution:
+    FUNCTION = "resize_image_resolution"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Resize Image With Resolution"
+    
+    constants = {
+        "NEAREST": Image.Resampling.NEAREST,
+        "LANCZOS": Image.Resampling.LANCZOS,
+        "BICUBIC": Image.Resampling.BICUBIC,
+    }
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def resize_image_resolution(image, resolution, method):
+        image = PILHandlingHodes.handle_input(image)
+        image_width, image_height = image.size
+        total_pixels = image_width * image_height
+        if total_pixels == 0:
+            raise RuntimeError("Image has no pixels")
+        if resolution < 256:
+            raise RuntimeError("Resolution must be positive and at least 256")
+        # get ratio
+        target_pixels = resolution ** 2
+        ratio = target_pixels / total_pixels
+        target_width = int(image_width * ratio)
+        target_height = int(image_height * ratio)
+        return (image.resize((target_width, target_height), ResizeImageResolution.constants[method]),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "resolution": ("INT", {"default": 512}),
+                "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
+            },
+        }
+
+@fundamental_node
+class ResizeScaleImageNode:
+    FUNCTION = "resize_scale_image"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Resize Scale Image"
+    
+    constants = {
+        "NEAREST": Image.Resampling.NEAREST,
+        "LANCZOS": Image.Resampling.LANCZOS,
+        "BICUBIC": Image.Resampling.BICUBIC,
+    }
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def resize_scale_image(image, scale, method):
+        image = PILHandlingHodes.handle_input(image)
+        if scale < 0:
+            raise RuntimeError("Scale must be positive")
+        return (image.resize((int(image.width*scale), int(image.height*scale)), ResizeScaleImageNode.constants[method]),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "size": ("INT", {"default": 512}),
+                "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
+            },
+        }
+
+@fundamental_node
+class ResizeShortestToNode:
+    FUNCTION = "resize_shortest_to"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Resize Shortest To"
+    
+    constants = {
+        "NEAREST": Image.Resampling.NEAREST,
+        "LANCZOS": Image.Resampling.LANCZOS,
+        "BICUBIC": Image.Resampling.BICUBIC,
+    }
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def resize_shortest_to(image, size, method):
+        image = PILHandlingHodes.handle_input(image)
+        if size < 0:
+            raise RuntimeError("Size must be positive")
+        if image.width < image.height:
+            return (image.resize((size, int(image.height* size/image.width)), ResizeShortestToNode.constants[method]),)
+        else:
+            return (image.resize((int(image.width* size/image.height), size), ResizeShortestToNode.constants[method]),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "size": ("INT", {"default": 512}),
+                "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
+            },
+        }
+
+@fundamental_node
+class ResizeLongestToNode:
+    FUNCTION = "resize_longest_to"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Resize Longest To"
+    
+    constants = {
+        "NEAREST": Image.Resampling.NEAREST,
+        "LANCZOS": Image.Resampling.LANCZOS,
+        "BICUBIC": Image.Resampling.BICUBIC,
+    }
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def resize_longest_to(image, size, method):
+        image = PILHandlingHodes.handle_input(image)
+        if size < 0:
+            raise RuntimeError("Size must be positive")
+        if image.width > image.height:
+            return (image.resize((size, int(image.height* size/image.width)), ResizeLongestToNode.constants[method]),)
+        else:
+            return (image.resize((int(image.width* size/image.height), size), ResizeLongestToNode.constants[method]),)
+        
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "size": ("INT", {"default": 512}),
+                "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
+            },
+        }
+
+
+@fundamental_node
+class ConvertGreyscaleNode:
+    FUNCTION = "convert_greyscale"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Convert Greyscale"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def convert_greyscale(image):
+        image = PILHandlingHodes.handle_input(image)
+        greyscale_image = image.convert("L")
+        # 3 channel greyscale image
+        return (greyscale_image.convert("RGB"),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            }
+        }
+        
+@fundamental_node
+class RotateImageNode:
+    FUNCTION = "rotate_image"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Rotate Image"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def rotate_image(image, angle):
+        image = PILHandlingHodes.handle_input(image)
+        return (image.rotate(angle),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "angle": ("INT", {"default": 0}),
+            }
+        }
+
+@fundamental_node
+class BrightnessNode:
+    FUNCTION = "brightness"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Brightness"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def brightness(image, factor):
+        image = PILHandlingHodes.handle_input(image)
+        enhancer = ImageEnhance.Brightness(image)
+        return (enhancer.enhance(factor),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "factor": ("FLOAT", {"default": 1.0}),
+            }
+        }
+
+@fundamental_node
+class ContrastNode:
+    FUNCTION = "contrast"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Contrast"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def contrast(image, factor):
+        image = PILHandlingHodes.handle_input(image)
+        enhancer = ImageEnhance.Contrast(image)
+        return (enhancer.enhance(factor),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "factor": ("FLOAT", {"default": 1.0}),
+            }
+        }
+
+@fundamental_node
+class SharpnessNode:
+    FUNCTION = "sharpness"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Sharpness"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def sharpness(image, factor):
+        image = PILHandlingHodes.handle_input(image)
+        enhancer = ImageEnhance.Sharpness(image)
+        return (enhancer.enhance(factor),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "factor": ("FLOAT", {"default": 1.0}),
+            }
+        }
+
+@fundamental_node
+class ColorNode:
+    FUNCTION = "color"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Color"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def color(image, factor):
+        image = PILHandlingHodes.handle_input(image)
+        enhancer = ImageEnhance.Color(image)
+        return (enhancer.enhance(factor),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "factor": ("FLOAT", {"default": 1.0}),
+            }
+        }
+
+@fundamental_node
+class ConvertRGBNode:
+    FUNCTION = "convert_rgb"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Convert RGB"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def convert_rgb(image):
+        image = PILHandlingHodes.handle_input(image)
+        return (image.convert("RGB"),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            }
+        }
+
+@fundamental_node
+class ThresholdNode:
+    FUNCTION = "threshold"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Threshold image with value"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def threshold(image, threshold):
+        image = PILHandlingHodes.handle_input(image)
+        return (image.point(lambda p: p > threshold and 255),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "threshold": ("INT", {"default": 128}),
+            }
+        }
 
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(fundamental_classes)
 validate(fundamental_classes)
