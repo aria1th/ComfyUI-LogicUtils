@@ -5,6 +5,8 @@ from .conversion import CLASS_MAPPINGS as ConversionMapping, CLASS_NAMES as Conv
 from .math_nodes import CLASS_MAPPINGS as MathMapping, CLASS_NAMES as MathNames
 from .io_node import CLASS_MAPPINGS as IOMapping, CLASS_NAMES as IONames
 
+from .external import CLASS_MAPPINGS as ExternalMapping, CLASS_NAMES as ExternalNames
+
 
 NODE_CLASS_MAPPINGS = {
 }
@@ -13,6 +15,7 @@ NODE_CLASS_MAPPINGS.update(LogicMapping)
 NODE_CLASS_MAPPINGS.update(RandomMapping)
 NODE_CLASS_MAPPINGS.update(ConversionMapping)
 NODE_CLASS_MAPPINGS.update(MathMapping)
+NODE_CLASS_MAPPINGS.update(ExternalMapping)
 
 NODE_DISPLAY_NAME_MAPPINGS = {
 
@@ -22,3 +25,4 @@ NODE_DISPLAY_NAME_MAPPINGS.update(LogicNames)
 NODE_DISPLAY_NAME_MAPPINGS.update(RandomNames)
 NODE_DISPLAY_NAME_MAPPINGS.update(ConversionNames)
 NODE_DISPLAY_NAME_MAPPINGS.update(MathNames)
+NODE_DISPLAY_NAME_MAPPINGS.update(ExternalNames)
