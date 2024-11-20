@@ -624,6 +624,26 @@ class ConvertRGBNode:
         }
 
 @fundamental_node
+class GetImageInfoNode:
+    FUNCTION="get_image_info"
+    RETURN_TYPES=("WIDTH", "HEIGHT", "TOTAL_PIXELS")
+    CATEGORY="image"
+    custom_name="Get Image Info"
+    @staticmethod
+    def get_image_info(image):
+        image = PILHandlingHodes.handle_input(image)
+        width, height = image.size
+        return (width, height, width * height)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            }
+        }
+
+
+@fundamental_node
 class ThresholdNode:
     FUNCTION = "threshold"
     RETURN_TYPES = ("IMAGE",)
