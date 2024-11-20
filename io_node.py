@@ -408,7 +408,7 @@ class ResizeScaleImageNode:
         return {
             "required": {
                 "image": ("IMAGE",),
-                "size": ("INT", {"default": 512}),
+                "size": ("INT", {"default": 2}),
                 "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
             },
         }
