@@ -2,9 +2,14 @@
 
 import json
 import numpy as np
-import piexif.helper
+try:
+    import piexif.helper
+    import piexif
+    from .exif.exif import read_info_from_image_stealth
+    piexif_loaded = True
+except ImportError:
+    piexif_loaded = False
 
-from .exif.exif import read_info_from_image_stealth
 from .imgio.converter import IOConverter, PILHandlingHodes
 from .autonode import node_wrapper, get_node_names_mappings, validate, anytype, PILImage
 import time
@@ -13,7 +18,6 @@ from PIL import Image
 from PIL import ImageOps
 from PIL import ImageEnhance
 from PIL.PngImagePlugin import PngInfo
-import piexif
 import folder_paths
 from comfy.cli_args import args
 
@@ -282,15 +286,16 @@ class SaveImageWebpCustomNode:
             if metadata_string:# override metadata
                 metadata = {}
                 metadata["metadata"]= metadata_string
-            exif_bytes = piexif.dump({
-                "Exif": {
-                    piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(json.dumps(metadata) or "", encoding="unicode")
-                },
-            })
+            if piexif_loaded:
+                exif_bytes = piexif.dump({
+                    "Exif": {
+                        piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(json.dumps(metadata) or "", encoding="unicode")
+                    },
+                })
             file = f"{filename}_{counter:05}_.webp"
             img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=compression, quality=quality, lossless=lossless, optimize=optimize)
-            
-            piexif.insert(exif_bytes, os.path.join(full_output_folder, file))
+            if piexif_loaded:
+                piexif.insert(exif_bytes, os.path.join(full_output_folder, file))
             
             results.append({
                 "filename": os.path.join(full_output_folder, file),
