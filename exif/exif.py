@@ -1,10 +1,15 @@
 import json
 import gzip
-import piexif
+try:
+    import piexif
+except ImportError:
+    piexif = None
 from PIL import Image
 
 # modules/images.py from Stable Diffusion WebUI
 def read_info_from_image(image: Image.Image) -> tuple[str | None, dict]:
+    if piexif is None:
+        return None, {}
     items = (image.info or {}).copy()
 
     geninfo = items.pop('parameters', None)
