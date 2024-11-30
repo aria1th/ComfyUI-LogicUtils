@@ -41,9 +41,13 @@ def initialization():
     except ImportError:
         run_installation("piexif")
     try:
-        import chadet
+        import chardet
     except ImportError:
         run_installation("chardet")
+    try:
+        from imgutils.tagging import get_wd14_tags
+    except ImportError:
+        run_installation("dghs-imgutils[gpu]")
 
 def run_installation(pkg_name: str):
     print(f"Installing {pkg_name}...")
@@ -54,3 +58,4 @@ def run_installation(pkg_name: str):
 
 if __name__ == "__main__":
     initialization()
+    print("Installation completed.")

@@ -63,7 +63,7 @@ class IOConverter:
             # if not first element is 1, then it is a batch of images so warning
             if input_data.shape[0] != 1:
                 print("Warning: Batch of images detected, taking first image")
-            input_data = input_data[0] * 255.0
+            input_data = input_data[0] * 255.0 if input_data.dtype == np.float32 else input_data[0]
             input_data = input_data.astype('uint8')
             return Image.fromarray(input_data)
         elif input_type == IOConverter.InputType.TORCH:
