@@ -42,6 +42,8 @@ __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
 
 # Then, you can use the registered nodes in the UI!
 """
+from inspect import signature
+
 def get_node_names_mappings(classes):
     node_names = {}
     node_classes = {}
@@ -64,6 +66,32 @@ def validate(container):
         for attr in ["FUNCTION", "INPUT_TYPES", "RETURN_TYPES", "CATEGORY"]:
             if not hasattr(cls, attr):
                 raise Exception("Class {} doesn't have attribute {}".format(cls.__name__, attr))
+        return_type = cls.RETURN_TYPES
+        if not isinstance(return_type, tuple):
+            raise Exception(f"RETURN_TYPES must be a tuple, got {type(return_type)} in {cls.__name__}")
+        if not all(isinstance(x, str) for x in return_type):
+            raise Exception(f"RETURN_TYPES must be a tuple of strings, got {return_type} in {cls.__name__}")
+        input_keys = ["self"]
+        for key in cls.INPUT_TYPES()["required"]:
+            input_keys.append(key)
+        for key in cls.INPUT_TYPES().get("optional", {}):
+            input_keys.append(key)
+        function_kwargs = signature(cls.__dict__[cls.FUNCTION]).parameters.keys()
+        function_kwargs = list(function_kwargs) + ["self"]
+        # if args/kwargs are in function kwargs, warn and skip
+        if "args" in function_kwargs:
+            print(f"Warning: args in function arguments in {cls.__name__}, skipping argument validation")
+            continue
+        if "kwargs" in function_kwargs:
+            print(f"Warning: kwargs in function arguments in {cls.__name__}, skipping argument validation")
+            continue
+        # input kwargs are subset of function kwargs
+        if not set(input_keys).issubset(function_kwargs):
+            raise Exception(f"INPUT_TYPES and function arguments must match in {cls.__name__}, input_types: {input_keys}, function arguments: {function_kwargs}")
+        # if not exact match, print warning
+        if len(set(input_keys)) != len(set(function_kwargs)):
+            print(f"Warning: INPUT_TYPES and function arguments don't match in {cls.__name__}, input_types: {input_keys}, function arguments: {function_kwargs}")
+            
 # AllTrue class hijacks the isinstance, issubclass, bool, str, jsonserializable, eq, ne methods to always return True
 class AllTrue(str):
     def __init__(self, representation=None) -> None:

@@ -10,7 +10,7 @@ try:
 except ImportError:
     piexif_loaded = False
 
-from .imgio.converter import IOConverter, PILHandlingHodes
+from .imgio.converter import PILHandlingHodes
 from .autonode import node_wrapper, get_node_names_mappings, validate, anytype, PILImage
 import time
 import os
@@ -166,7 +166,7 @@ class SaveImageCustomNode:
     FUNCTION = "save_images"
 
     OUTPUT_NODE = True
-
+    RESULT_NODE = True
     CATEGORY = "image"
     custom_name = "Save Image Custom Node" 
 
@@ -220,7 +220,9 @@ class SaveTextCustomNode:
     FUNCTION = "save_text"
     custom_name = "Save Text Custom Node"
     CATEGORY = "text"
-
+    RESULT_NODE = True
+    OUTPUT_NODE = True
+    
     def save_text(self, text, filename_prefix="ComfyUI",subfolder_dir="",filename=""):
         text = str(text)
         assert len(text) > 0 and len(filename) > 0, "Text and filename must be non-empty"
@@ -263,6 +265,7 @@ class SaveImageWebpCustomNode:
     FUNCTION = "save_images"
 
     OUTPUT_NODE = True
+    RESULT_NODE = True
 
     CATEGORY = "image"
     custom_name = "Save Image Webp Node" 
