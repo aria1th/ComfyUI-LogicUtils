@@ -1,6 +1,6 @@
 from .imgio.converter import PILHandlingHodes
 from .autonode import node_wrapper, get_node_names_mappings, validate, anytype, PILImage
-from .utils.tagger import get_tags
+from .utils.tagger import get_tags, tagger_keys
 
 auxilary_classes = []
 auxilary_node = node_wrapper(auxilary_classes)
@@ -12,9 +12,9 @@ class GetRatingNode:
     CATEGORY = "tagger"
     custom_name = "Get Rating Class"
     @staticmethod
-    def get_rating_class(image):
+    def get_rating_class(image, model_name):
         image = PILHandlingHodes.handle_input(image)
-        result_dict = get_tags(image)
+        result_dict = get_tags(image, model_name=model_name)
         return (result_dict['rating'], )
     @classmethod
     def INPUT_TYPES(cls):
@@ -22,6 +22,9 @@ class GetRatingNode:
             "required": {
                 "image": ("IMAGE",),
             },
+            "optional": {
+                "model_name": (tagger_keys, {"default": tagger_keys[0]}),
+            }
         }
 
 @auxilary_node
@@ -31,9 +34,9 @@ class GetRatingFromTextNode:
     CATEGORY = "tagger"
     custom_name = "Get Rating Class From Text"
     @staticmethod
-    def get_rating_class(image):
+    def get_rating_class(image, model_name):
         image = PILHandlingHodes.handle_input(image)
-        result_dict = get_tags(image)
+        result_dict = get_tags(image, model_name=model_name)
         return (result_dict['rating'], )
     @classmethod
     def INPUT_TYPES(cls):
@@ -41,6 +44,9 @@ class GetRatingFromTextNode:
             "required": {
                 "image": ("STRING", {"default": "/path/to/image.jpg"}),
             },
+            "optional": {
+                "model_name": (tagger_keys, {"default": tagger_keys[0]}),
+            }
         }
 
 @auxilary_node
@@ -50,9 +56,9 @@ class GetTagsAboveThresholdNode:
     CATEGORY = "tagger"
     custom_name = "Get Tags Above Threshold"
     @staticmethod
-    def get_tags_above_threshold(image, threshold, replace):
+    def get_tags_above_threshold(image, threshold, replace, model_name):
         image = PILHandlingHodes.handle_input(image)
-        result_dict = get_tags(image, threshold=threshold, replace=replace)
+        result_dict = get_tags(image, threshold=threshold, replace=replace, model_name=model_name)
         return (", ".join(result_dict['tags']), )
     @classmethod
     def INPUT_TYPES(cls):
@@ -63,6 +69,7 @@ class GetTagsAboveThresholdNode:
             "optional": {
                 "threshold": ("FLOAT", {"default": 0.4}),
                 "replace": ("BOOLEAN", {"default": False}),
+                "model_name": (tagger_keys, {"default": tagger_keys[0]}),
             }
         }
 
@@ -73,9 +80,9 @@ class GetTagsAboveThresholdFromTextNode:
     CATEGORY = "tagger"
     custom_name = "Get Tags Above Threshold From Text"
     @staticmethod
-    def get_tags_above_threshold(image, threshold, replace):
+    def get_tags_above_threshold(image, threshold, replace, model_name):
         image = PILHandlingHodes.handle_input(image)
-        result_dict = get_tags(image, threshold=threshold, replace=replace)
+        result_dict = get_tags(image, threshold=threshold, replace=replace, model_name=model_name)
         return (", ".join(result_dict['tags']), )
     @classmethod
     def INPUT_TYPES(cls):
@@ -86,6 +93,7 @@ class GetTagsAboveThresholdFromTextNode:
             "optional": {
                 "threshold": ("FLOAT", {"default": 0.4}),
                 "replace": ("BOOLEAN", {"default": False}),
+                "model_name": (tagger_keys, {"default": tagger_keys[0]}),
             }
         }
         
@@ -96,9 +104,9 @@ class GetCharactersAboveThresholdNode:
     CATEGORY = "tagger"
     custom_name = "Get Chars Above Threshold"
     @staticmethod
-    def get_tags_above_threshold(image, threshold, replace):
+    def get_tags_above_threshold(image, threshold, replace, model_name):
         image = PILHandlingHodes.handle_input(image)
-        result_dict = get_tags(image, threshold=threshold, replace=replace)
+        result_dict = get_tags(image, threshold=threshold, replace=replace, model_name=model_name)
         return (", ".join(result_dict['chars']), )
     @classmethod
     def INPUT_TYPES(cls):
@@ -109,6 +117,7 @@ class GetCharactersAboveThresholdNode:
             "optional": {
                 "threshold": ("FLOAT", {"default": 0.4}),
                 "replace": ("BOOLEAN", {"default": False}),
+                "model_name": (tagger_keys, {"default": tagger_keys[0]}),
             }
         }
 
@@ -119,9 +128,9 @@ class GetCharactersAboveThresholdFromTextNode:
     CATEGORY = "tagger"
     custom_name = "Get Chars Above Threshold From Text"
     @staticmethod
-    def get_tags_above_threshold(image, threshold, replace):
+    def get_tags_above_threshold(image, threshold, replace, model_name):
         image = PILHandlingHodes.handle_input(image)
-        result_dict = get_tags(image, threshold=threshold, replace=replace)
+        result_dict = get_tags(image, threshold=threshold, replace=replace, model_name=model_name)
         return (", ".join(result_dict['chars']), )
     @classmethod
     def INPUT_TYPES(cls):
@@ -132,6 +141,7 @@ class GetCharactersAboveThresholdFromTextNode:
             "optional": {
                 "threshold": ("FLOAT", {"default": 0.4}),
                 "replace": ("BOOLEAN", {"default": False}),
+                "model_name": (tagger_keys, {"default": tagger_keys[0]}),
             }
         }
 
@@ -142,9 +152,9 @@ class GetAllTagsAboveThresholdNode:
     CATEGORY = "tagger"
     custom_name = "Get All Tags Above Threshold"
     @staticmethod
-    def get_tags(image, threshold, replace):
+    def get_tags(image, threshold, replace, model_name):
         image = PILHandlingHodes.handle_input(image)
-        result = get_tags(image, threshold=threshold, replace=replace)
+        result = get_tags(image, threshold=threshold, replace=replace, model_name=model_name)
         result_list = []
         result_list.append(result['rating'])
         result_list.extend(result['tags'])
@@ -159,6 +169,7 @@ class GetAllTagsAboveThresholdNode:
             "optional": {
                 "threshold": ("FLOAT", {"default": 0.4}),
                 "replace": ("BOOLEAN", {"default": False}),
+                "model_name": (tagger_keys, {"default": tagger_keys[0]}),
             }
         }
 
