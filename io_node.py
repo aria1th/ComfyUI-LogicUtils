@@ -1,5 +1,6 @@
 
 
+import base64
 import json
 import numpy as np
 try:
@@ -257,7 +258,7 @@ class SaveImageWebpCustomNode:
                      "filename_prefix": ("STRING", {"default": "ComfyUI"}),
                      "subfolder_dir": ("STRING", {"default": ""}),
                      },
-                 "optional": {"quality": ("INT", {"default": 100}), "lossless": ("BOOL", {"default": False}), "compression": ("INT", {"default": 4}), "optimize": ("BOOL", {"default": False}), "metadata_string": ("STRING", {"default": ""})},
+                 "optional": {"quality": ("INT", {"default": 100}), "lossless": ("BOOLEAN", {"default": False}), "compression": ("INT", {"default": 4}), "optimize": ("BOOLEAN", {"default": False}), "metadata_string": ("STRING", {"default": ""})},
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
                 }
 
@@ -277,7 +278,10 @@ class SaveImageWebpCustomNode:
         results = list()
         for image in images:
             i = 255. * image.cpu().numpy()
-            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+            clipped = np.clip(i, 0, 255).astype(np.uint8)
+            if clipped.shape[0] <= 3:
+                clipped = np.transpose(clipped, (1, 2, 0)) #[1216, 832, 3]
+            img = Image.fromarray(clipped)
             metadata = None
             if not args.disable_metadata:
                 metadata = {}
@@ -373,6 +377,86 @@ class ResizeImageResolution:
                 "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
             },
         }
+
+@fundamental_node
+class Base64DecodeNode:
+    FUNCTION = "base64_decode"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Base64 Decode to Image"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def base64_decode(base64_string):
+        image = PILHandlingHodes.handle_input(base64_string) # automatically converts to PIL image
+        return (image,)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "base64_string": ("STRING",),
+            }
+        }
+
+@fundamental_node
+class Base64EncodeNode:
+    FUNCTION = "base64_encode"
+    RETURN_TYPES = ("STRING",)
+    CATEGORY = "image"
+    custom_name = "Image to Base64 Encode"
+    @staticmethod
+    def base64_encode(image, quality, format, gzip_compress):
+        image = PILHandlingHodes.to_base64(image, quality, format, gzip_compress)
+        return (image,)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            },
+            "optional": {
+                "quality": ("INT", {"default": 100}),
+                "format": (["PNG", "WEBP", "JPG"], {"default": "PNG"}),
+                "gzip_compress": ("BOOLEAN", {"default": False}),
+            }
+        }
+
+@fundamental_node
+class StringToBase64Node:
+    FUNCTION = "string_to_base64"
+    RETURN_TYPES = ("STRING",)
+    CATEGORY = "image"
+    custom_name = "String to Base64 Encode"
+    @staticmethod
+    def string_to_base64(string, gzip_compress):
+        return (PILHandlingHodes.string_to_base64(string, gzip_compress),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "string": ("STRING",),
+            },
+            "optional": {
+                "gzip_compress": ("BOOLEAN", {"default": False}),
+            }
+        }
+
+@fundamental_node
+class Base64ToStringNode:
+    FUNCTION = "base64_to_string"
+    RETURN_TYPES = ("STRING",)
+    CATEGORY = "image"
+    custom_name = "Base64 to String Decode"
+    @staticmethod
+    def base64_to_string(base64_string):
+        return (PILHandlingHodes.maybe_gzip_base64_to_string(base64_string),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "base64_string": ("STRING",),
+            }
+        }
+
 @fundamental_node
 class InvertImageNode:
     FUNCTION = "invert_image"
