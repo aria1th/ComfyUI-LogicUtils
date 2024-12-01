@@ -13,7 +13,7 @@ class LogicGateCompare:
     """
     Returns 1 if input1 > input2, 0 otherwise
     """
-    RETURN_TYPES = ("BOOL",)
+    RETURN_TYPES = ("BOOLEAN",)
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -171,7 +171,7 @@ class LogicGateCompare:
     """
     Returns 1 if input1 > input2, 0 otherwise
     """
-    RETURN_TYPES = ("BOOL",)
+    RETURN_TYPES = ("BOOLEAN",)
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -190,7 +190,7 @@ class LogicGateCompareString:
     """
     Returns if given regex (1) is found in given string (2)
     """
-    RETURN_TYPES = ("BOOL",)
+    RETURN_TYPES = ("BOOLEAN",)
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -263,7 +263,7 @@ class LogicGateAnd:
     """
     Returns 1 if all inputs are True, 0 otherwise
     """
-    RETURN_TYPES = ("BOOL",)
+    RETURN_TYPES = ("BOOLEAN",)
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -282,7 +282,7 @@ class LogicGateOr:
     """
     Returns 1 if any input is True, 0 otherwise
     """
-    RETURN_TYPES = ("BOOL",)
+    RETURN_TYPES = ("BOOLEAN",)
     @classmethod
     def INPUT_TYPES(s):
         return {
