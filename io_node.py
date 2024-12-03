@@ -3,6 +3,7 @@
 import base64
 import json
 import numpy as np
+import torch
 try:
     import piexif.helper
     import piexif
@@ -312,6 +313,55 @@ class SaveImageWebpCustomNode:
             counter += 1
 
         return { "ui": { "images": results }, "outputs": { "images": os.path.join(full_output_folder, file).rstrip('.webp') } }
+
+@fundamental_node
+class ComposeRGBAImageFromMask:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "mask": ("MASK",),
+                "invert": ("BOOLEAN", {"default": False}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "compose"
+    CATEGORY = "image"
+    custom_name = "Compose RGBA Image From Mask"
+    @staticmethod
+    def compose(image, mask, invert):
+        if invert:
+            mask = 1.0 - mask
+
+        # Ensure mask has shape (batch_size, height, width, 1)
+        mask = mask.reshape((-1, mask.shape[-2], mask.shape[-1], 1))
+        # check devices, move to cpu
+        if hasattr(image, "device"):
+            image = image.cpu()
+        if hasattr(mask, "device"):
+            mask = mask.cpu()
+        # Resize mask to match image dimensions if necessary
+        if image.shape[0] != mask.shape[0] or image.shape[1] != mask.shape[1] or image.shape[2] != mask.shape[2]:
+            # Resize mask to match image dimensions
+            mask = torch.nn.functional.interpolate(
+                mask.permute(0, 3, 1, 2),
+                size=(image.shape[1], image.shape[2]),
+                mode="bilinear",
+                align_corners=False
+            ).permute(0, 2, 3, 1)
+
+        num_channels = image.shape[-1]
+        if num_channels == 3:
+            rgba_image = torch.cat((image, mask), dim=-1)
+        elif num_channels == 4:
+            rgba_image = image.clone()
+            rgba_image[:, :, :, 3:] = mask
+        else:
+            raise ValueError("Image must have 3 (RGB) or 4 (RGBA) channels")
+
+        return (rgba_image,)
 
 @fundamental_node
 class ResizeImageNode:
