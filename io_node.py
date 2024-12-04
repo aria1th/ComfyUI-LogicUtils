@@ -1,5 +1,3 @@
-
-
 import base64
 import json
 import numpy as np
@@ -180,7 +178,7 @@ class SaveImageCustomNode:
     custom_name = "Save Image Custom Node" 
 
     def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None):
-        if not images: # sometimes images is empty
+        if images is None: # sometimes images is empty
             images = []
         filename_prefix += self.prefix_append
         throw_if_parent_or_root_access(filename_prefix)
@@ -286,7 +284,7 @@ class SaveImageWebpCustomNode:
     custom_name = "Save Image Webp Node" 
 
     def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None, quality=100, lossless=False, compression=4, optimize=False, metadata_string=""):
-        if not images: # sometimes images is empty
+        if images is None: # sometimes images is empty
             images = []
         throw_if_parent_or_root_access(filename_prefix)
         throw_if_parent_or_root_access(subfolder_dir)
