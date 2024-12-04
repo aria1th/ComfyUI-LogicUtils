@@ -1,8 +1,107 @@
 import random
+import uuid
 from .autonode import node_wrapper, get_node_names_mappings, validate
+
 
 classes = []
 node = node_wrapper(classes)
+@node
+class SystemRandomFloat:
+    """
+    Random number generator using system randomness
+    """
+    def __init__(self):
+        pass
+    @staticmethod
+    def generate(min_val=0.0, max_val=1.0, precision=0):
+        instance = random.SystemRandom()
+        value = instance.uniform(min_val, max_val)
+        if precision > 0:
+            value = round(value, precision)
+        return (value,)
+    RETURN_TYPES = ("FLOAT",)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "min_val": ("FLOAT", { "default": 0.0, "min": -999999999, "max": 999999999.0, "step": 0.01, "display": "number" }),
+                "max_val": ("FLOAT", { "default": 1.0, "min": -999999999, "max": 999999999.0, "step": 0.01, "display": "number" }),
+                "precision": ("INT", { "default": 0, "min": 0, "max": 10, "step": 1, "display": "number" }),
+            },
+        }
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "System Random Float"
+
+@node
+class SystemRandomInt:
+    """
+    Random number generator using system randomness
+    Generates an integer value between 0 and 2^32-1
+    """
+
+    def __init__(self):
+        pass
+    @staticmethod
+    def generate(min_val=0, max_val=2**32 - 1):
+        instance = random.SystemRandom()
+        value = instance.randint(min_val, max_val)
+        return (value,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "min_val": (
+                    "INT",
+                    {
+                        "default": 0,
+                        "min": -(2**32 - 1),
+                        "max": 2**32 - 1,
+                        "step": 1,
+                        "display": "number",
+                    },
+                ),
+                "max_val": (
+                    "INT",
+                    {
+                        "default": 2**32 - 1,
+                        "min": -(2**32 - 1),
+                        "max": 2**32 - 1,
+                        "step": 1,
+                        "display": "number",
+                    },
+                ),
+            },
+        }
+    RETURN_TYPES = ("INT",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "System Random Int"
+
+class UUIDGenerator:
+    """
+    Generates a random UUID
+    """
+    def __init__(self):
+        pass
+    @staticmethod
+    def generate(length=36):
+        value = uuid.uuid4()
+        value = str(value)
+        if length < 36:
+            value = value[:length]
+        return (value,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "length": ("INT", { "default": 36, "min": 1, "max": 36, "step": 1, "display": "number" }),
+            },
+        }
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "UUID Generator"
 
 @node
 class UniformRandomFloat:
