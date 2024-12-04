@@ -145,6 +145,13 @@ class ParseExifNode:
             }
         }
 
+def throw_if_parent_or_root_access(path):
+    if ".." in path or path.startswith("/") or path.startswith("\\"):
+        raise RuntimeError("Invalid path")
+    if path.startswith("~"):
+        raise RuntimeError("Invalid path")
+    if os.path.isabs(path):
+        raise RuntimeError("Path cannot be absolute")
 
 @fundamental_node
 class SaveImageCustomNode:
@@ -173,7 +180,11 @@ class SaveImageCustomNode:
     custom_name = "Save Image Custom Node" 
 
     def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None):
+        if not images: # sometimes images is empty
+            images = []
         filename_prefix += self.prefix_append
+        throw_if_parent_or_root_access(filename_prefix)
+        throw_if_parent_or_root_access(subfolder_dir)
         output_dir = os.path.join(self.output_dir, subfolder_dir)
         full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0])
         results = list()
@@ -227,6 +238,8 @@ class SaveTextCustomNode:
     
     def save_text(self, text, filename_prefix="ComfyUI",subfolder_dir="",filename=""):
         text = str(text)
+        throw_if_parent_or_root_access(filename_prefix)
+        throw_if_parent_or_root_access(subfolder_dir)
         assert len(text) > 0 and len(filename) > 0, "Text and filename must be non-empty"
         filename_prefix += self.prefix_append
         output_dir = os.path.join(self.output_dir, subfolder_dir)
@@ -273,6 +286,10 @@ class SaveImageWebpCustomNode:
     custom_name = "Save Image Webp Node" 
 
     def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None, quality=100, lossless=False, compression=4, optimize=False, metadata_string=""):
+        if not images: # sometimes images is empty
+            images = []
+        throw_if_parent_or_root_access(filename_prefix)
+        throw_if_parent_or_root_access(subfolder_dir)
         filename_prefix += self.prefix_append
         output_dir = os.path.join(self.output_dir, subfolder_dir)
         full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0])
