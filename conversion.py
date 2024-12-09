@@ -9,7 +9,7 @@ node = node_wrapper(classes)
 conversion_operators = {
     "Int" : int,
     "Float" : float,
-    "Bool" : bool,
+    "Boolean" : bool,
     "String" : str
 }
 def create_class(type_to):
