@@ -474,7 +474,7 @@ class ResizeImageEnsuringMultiple:
                 "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
             },
         }
-
+@fundamental_node
 class ResizeImageResolutionIfBigger:
     FUNCTION = "resize_image_resolution_if_bigger"
     RETURN_TYPES = ("IMAGE",)
@@ -511,7 +511,7 @@ class ResizeImageResolutionIfBigger:
                 "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
             },
         }
-
+@fundamental_node
 class ResizeImageResolutionIfSmaller:
     FUNCTION = "resize_image_resolution_if_smaller"
     RETURN_TYPES = ("IMAGE",)
