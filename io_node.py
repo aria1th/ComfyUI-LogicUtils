@@ -475,6 +475,80 @@ class ResizeImageEnsuringMultiple:
             },
         }
 
+class ResizeImageResolutionIfBigger:
+    FUNCTION = "resize_image_resolution_if_bigger"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Resize Image With Resolution If Bigger"
+    
+    constants = {
+        "NEAREST": Image.Resampling.NEAREST,
+        "LANCZOS": Image.Resampling.LANCZOS,
+        "BICUBIC": Image.Resampling.BICUBIC,
+    }
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def resize_image_resolution_if_bigger(image, resolution, method):
+        image = PILHandlingHodes.handle_input(image)
+        image_width, image_height = image.size
+        total_pixels = image_width * image_height
+        if total_pixels == 0:
+            raise RuntimeError("Image has no pixels")
+        if total_pixels <= resolution ** 2:
+            return (image,)
+        # get ratio
+        target_pixels = resolution ** 2
+        ratio = target_pixels / total_pixels
+        target_width = int(image_width * ratio)
+        target_height = int(image_height * ratio)
+        return (image.resize((target_width, target_height), ResizeImageResolutionIfBigger.constants[method]),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "resolution": ("INT", {"default": 512}),
+                "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
+            },
+        }
+
+class ResizeImageResolutionIfSmaller:
+    FUNCTION = "resize_image_resolution_if_smaller"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Resize Image With Resolution If Smaller"
+    
+    constants = {
+        "NEAREST": Image.Resampling.NEAREST,
+        "LANCZOS": Image.Resampling.LANCZOS,
+        "BICUBIC": Image.Resampling.BICUBIC,
+    }
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def resize_image_resolution_if_smaller(image, resolution, method):
+        image = PILHandlingHodes.handle_input(image)
+        image_width, image_height = image.size
+        total_pixels = image_width * image_height
+        if total_pixels == 0:
+            raise RuntimeError("Image has no pixels")
+        if total_pixels >= resolution ** 2:
+            return (image,)
+        # get ratio
+        target_pixels = resolution ** 2
+        ratio = target_pixels / total_pixels
+        target_width = int(image_width * ratio)
+        target_height = int(image_height * ratio)
+        return (image.resize((target_width, target_height), ResizeImageResolutionIfSmaller.constants[method]),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "resolution": ("INT", {"default": 512}),
+                "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
+            },
+        }
+
 @fundamental_node
 class Base64DecodeNode:
     FUNCTION = "base64_decode"
