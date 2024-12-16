@@ -442,6 +442,38 @@ class ResizeImageResolution:
                 "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
             },
         }
+@fundamental_node
+class ResizeImageEnsuringMultiple:
+    FUNCTION = "resize_image_ensuring_multiple"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Resize Image Ensuring W/H Multiple"
+    
+    constants = {
+        "NEAREST": Image.Resampling.NEAREST,
+        "LANCZOS": Image.Resampling.LANCZOS,
+        "BICUBIC": Image.Resampling.BICUBIC,
+    }
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def resize_image_ensuring_multiple(image, multiple, method):
+        image = PILHandlingHodes.handle_input(image)
+        image_width, image_height = image.size
+        total_pixels = image_width * image_height
+        if total_pixels == 0:
+            raise RuntimeError("Image has no pixels")
+        target_width = (image_width // multiple) * multiple
+        target_height = (image_height // multiple) * multiple
+        return (image.resize((target_width, target_height), ResizeImageResolution.constants[method]),)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "multiple": ("INT", {"default": 32}),
+                "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
+            },
+        }
 
 @fundamental_node
 class Base64DecodeNode:

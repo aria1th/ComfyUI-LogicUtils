@@ -30,7 +30,7 @@ class SDWebuiAPINode:
                 "height": ("INT", {"default": 1024}),
                 "hr_scale": ("FLOAT", {"default": 1.5}),
                 "hr_upscale": ("STRING", {"default": "Latent"}),
-                "enable_hr": ("BOOL", {"default": False}),
+                "enable_hr": ("BOOLEAN", {"default": False}),
                 "cfg_scale": ("INT", {"default": 7}),
             }
         }
@@ -59,7 +59,7 @@ class SDWebuiAPIFallbackNode:
                 "height": ("INT", {"default": 1024}),
                 "hr_scale": ("FLOAT", {"default": 1.5}),
                 "hr_upscale": ("STRING", {"default": "Latent"}),
-                "enable_hr": ("BOOL", {"default": False}),
+                "enable_hr": ("BOOLEAN", {"default": False}),
                 "cfg_scale": ("INT", {"default": 7}),
             }
         }
