@@ -34,7 +34,7 @@ class SystemRandomFloat:
     custom_name = "System Random Float"
     @classmethod
     def IS_CHANGED(s, min_val, max_val, precision):
-       return ""
+       return random.SystemRandom().random()
 
 @node
 class SystemRandomInt:
@@ -82,7 +82,7 @@ class SystemRandomInt:
     custom_name = "System Random Int"
     @classmethod
     def IS_CHANGED(s, min_val, max_val):
-       return ""
+       return random.SystemRandom().random()
 
 
 class UUIDGenerator:
@@ -111,7 +111,7 @@ class UUIDGenerator:
     custom_name = "UUID Generator"
     @classmethod
     def IS_CHANGED(s, length):
-       return ""
+       return random.SystemRandom().random()
 
 @node
 class UniformRandomFloat:
