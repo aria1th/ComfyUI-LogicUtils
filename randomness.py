@@ -33,8 +33,8 @@ class SystemRandomFloat:
     CATEGORY = "Logic Gates"
     custom_name = "System Random Float"
     @classmethod
-    def IS_CHANGED(s, image, string_field, int_field, float_field, print_to_screen):
-       return random.randint(0, 1)
+    def IS_CHANGED(s, min_val, max_val, precision):
+       return ""
 
 @node
 class SystemRandomInt:
@@ -81,8 +81,8 @@ class SystemRandomInt:
     CATEGORY = "Logic Gates"
     custom_name = "System Random Int"
     @classmethod
-    def IS_CHANGED(s, image, string_field, int_field, float_field, print_to_screen):
-       return random.randint(0, 1)
+    def IS_CHANGED(s, min_val, max_val):
+       return ""
 
 
 class UUIDGenerator:
@@ -110,8 +110,8 @@ class UUIDGenerator:
     CATEGORY = "Logic Gates"
     custom_name = "UUID Generator"
     @classmethod
-    def IS_CHANGED(s, image, string_field, int_field, float_field, print_to_screen):
-       return random.randint(0, 1)
+    def IS_CHANGED(s, length):
+       return ""
 
 @node
 class UniformRandomFloat:
