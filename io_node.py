@@ -569,6 +569,27 @@ class Base64DecodeNode:
         }
 
 @fundamental_node
+class ImageFromURLNode:
+    FUNCTION = "url_download"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Download Image from URL"
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def url_download(url):
+        if not url.startswith("http"): # for security reasons
+            raise RuntimeError("Invalid URL")
+        image = PILHandlingHodes.handle_input(url) # automatically downloads image
+        return (image,)
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "url": ("STRING",),
+            }
+        }
+
+@fundamental_node
 class Base64EncodeNode:
     FUNCTION = "base64_encode"
     RETURN_TYPES = ("STRING",)

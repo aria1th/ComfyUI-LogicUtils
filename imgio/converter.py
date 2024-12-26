@@ -6,6 +6,69 @@ import requests
 import os
 from io import BytesIO
 import gzip
+import re
+from urllib.parse import urlparse
+
+def fetch_image_securely(image_url: str, 
+                        allowed_schemes=('http', 'https'), 
+                        max_file_size=5_000_000, 
+                        request_timeout=5):
+    """
+    Fetches an image from the given URL securely. 
+
+    :param image_url: URL of the image to retrieve
+    :param allowed_schemes: A tuple of allowed URL schemes (default: ('http', 'https'))
+    :param max_file_size: Max size (in bytes) of the file to download
+    :param request_timeout: Timeout (in seconds) for the request
+    :return: PIL Image object if successful, else raises an exception
+    """
+
+    # -- 1. Validate scheme to avoid unexpected protocols  --
+    parsed = urlparse(image_url)
+    if parsed.scheme not in allowed_schemes:
+        raise ValueError(f"Invalid or disallowed URL scheme: {parsed.scheme}")
+
+    # -- 2. Prevent local network (SSRF) attacks by blocking private or loopback addresses  --
+    #       This is a simplified check. You may want a more robust library-based approach.
+    ip_like_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+    hostname = parsed.hostname
+    if (hostname is None 
+        or hostname.lower() in ("localhost", "127.0.0.1", "::1") 
+        or re.match(ip_like_pattern, hostname) and hostname.startswith("10.") 
+        or hostname.startswith("192.168.") 
+        or hostname.startswith("172.16.") 
+        or hostname.startswith("172.17.") 
+        or hostname.startswith("172.18.") 
+        or hostname.startswith("172.19.") 
+        or hostname.startswith("172.2")  # covers 172.20 - 172.31
+        or hostname.startswith("172.3")):
+        raise ValueError("URL resolves to a private or loopback address, which is disallowed.")
+
+    # -- 3. Retrieve the image with a timeout and stream to avoid large memory overhead  --
+    with requests.get(image_url, timeout=request_timeout, stream=True) as response:
+        response.raise_for_status()
+
+        # -- 4. Check MIME type from headers to ensure it's an image  --
+        content_type = response.headers.get('Content-Type', '').lower()
+        if not content_type.startswith("image/"):
+            raise ValueError(f"URL does not appear to point to an image. Content-Type: {content_type}")
+
+        # -- 5. Check the file size from Content-Length (if provided)  --
+        content_length = response.headers.get('Content-Length')
+        if content_length and int(content_length) > max_file_size:
+            raise ValueError(f"File is too large to be processed safely, {int(content_length)} bytes received. The maximum size is {max_file_size} bytes.")
+
+        data = BytesIO()
+        downloaded = 0
+        chunk_size = 8192
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            downloaded += len(chunk)
+            if downloaded > max_file_size:
+                raise ValueError(f"File exceeded the maximum allowed size during download. The maximum size is {max_file_size} bytes.")
+            data.write(chunk)
+
+    data.seek(0)
+    return Image.open(data)
 
 class IOConverter:
     """
@@ -106,9 +169,8 @@ class IOConverter:
             result = Image.open(BytesIO(decoded_data)).convert("RGB")
             return result
         elif input_type == IOConverter.InputType.URL:
-            response = requests.get(input_data)
-            response.raise_for_status()
-            return Image.open(BytesIO(response.content))
+            result = fetch_image_securely(input_data)
+            return result
         else:
             raise Exception(f"Invalid input type, {input_type}")
 
@@ -164,9 +226,7 @@ class IOConverter:
             image = IOConverter.convert_to_pil(input_data)
             return IOConverter.to_tensor(image)
         elif input_type == IOConverter.InputType.URL:
-            response = requests.get(input_data)
-            response.raise_for_status()
-            image = Image.open(BytesIO(response.content))
+            image = fetch_image_securely(input_data)
             return IOConverter.to_tensor(image)
         else:
             raise Exception(f"Invalid input type, {input_type}")
