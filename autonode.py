@@ -80,18 +80,18 @@ def validate(container):
         function_kwargs = list(function_kwargs) + ["self"]
         # if args/kwargs are in function kwargs, warn and skip
         if "args" in function_kwargs:
-            print(f"Warning: args in function arguments in {cls.__name__}, skipping argument validation")
+            #print(f"Warning: args in function arguments in {cls.__name__}, skipping argument validation")
             continue
         if "kwargs" in function_kwargs:
-            print(f"Warning: kwargs in function arguments in {cls.__name__}, skipping argument validation")
+            #print(f"Warning: kwargs in function arguments in {cls.__name__}, skipping argument validation")
             continue
         # input kwargs are subset of function kwargs
         if not set(input_keys).issubset(function_kwargs):
             raise Exception(f"INPUT_TYPES and function arguments must match in {cls.__name__}, input_types: {input_keys}, function arguments: {function_kwargs}")
         # if not exact match, print warning
         if len(set(input_keys)) != len(set(function_kwargs)):
-            print(f"Warning: INPUT_TYPES and function arguments don't match in {cls.__name__}, input_types: {input_keys}, function arguments: {function_kwargs}")
-            
+            #print(f"Warning: INPUT_TYPES and function arguments don't match in {cls.__name__}, input_types: {input_keys}, function arguments: {function_kwargs}")
+            pass
 # AllTrue class hijacks the isinstance, issubclass, bool, str, jsonserializable, eq, ne methods to always return True
 class AllTrue(str):
     def __init__(self, representation=None) -> None:
