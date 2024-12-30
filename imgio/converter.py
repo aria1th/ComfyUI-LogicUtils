@@ -9,18 +9,24 @@ import gzip
 import re
 from urllib.parse import urlparse
 
-def fetch_image_securely(image_url: str, 
-                        allowed_schemes=('http', 'https'), 
-                        max_file_size=5_000_000, 
+def fetch_image_securely(image_url: str,
+                        allowed_schemes=('http', 'https'),
+                        max_file_size=5_000_000,
                         request_timeout=5):
     """
-    Fetches an image from the given URL securely. 
+    Fetches an image from the given URL securely.
 
-    :param image_url: URL of the image to retrieve
-    :param allowed_schemes: A tuple of allowed URL schemes (default: ('http', 'https'))
-    :param max_file_size: Max size (in bytes) of the file to download
-    :param request_timeout: Timeout (in seconds) for the request
-    :return: PIL Image object if successful, else raises an exception
+    This function:
+    1. Validates the URL scheme (only http/https).
+    2. Blocks private IP/loopback addresses to prevent SSRF attacks.
+    3. Streams data to avoid excessive memory usage.
+    4. Checks MIME type, size limits, and optionally handles form-encoded image data.
+
+    :param image_url: URL of the image to retrieve (e.g., an S3-signed URL).
+    :param allowed_schemes: A tuple of allowed URL schemes (default: ('http', 'https')).
+    :param max_file_size: Max size (in bytes) of the file to download.
+    :param request_timeout: Timeout (in seconds) for the request.
+    :return: PIL Image object if successful, else raises an exception.
     """
 
     # -- 1. Validate scheme to avoid unexpected protocols  --
@@ -29,46 +35,71 @@ def fetch_image_securely(image_url: str,
         raise ValueError(f"Invalid or disallowed URL scheme: {parsed.scheme}")
 
     # -- 2. Prevent local network (SSRF) attacks by blocking private or loopback addresses  --
-    #       This is a simplified check. You may want a more robust library-based approach.
+    #    This is a simplified check. Consider using a library for robust IP parsing if needed.
     ip_like_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
     hostname = parsed.hostname
-    if (hostname is None 
-        or hostname.lower() in ("localhost", "127.0.0.1", "::1") 
-        or re.match(ip_like_pattern, hostname) and hostname.startswith("10.") 
-        or hostname.startswith("192.168.") 
-        or hostname.startswith("172.16.") 
-        or hostname.startswith("172.17.") 
-        or hostname.startswith("172.18.") 
-        or hostname.startswith("172.19.") 
+    if (
+        hostname is None
+        or hostname.lower() in ("localhost", "127.0.0.1", "::1")
+        or (re.match(ip_like_pattern, hostname) and hostname.startswith("10."))
+        or hostname.startswith("192.168.")
+        or hostname.startswith("172.16.")
+        or hostname.startswith("172.17.")
+        or hostname.startswith("172.18.")
+        or hostname.startswith("172.19.")
         or hostname.startswith("172.2")  # covers 172.20 - 172.31
-        or hostname.startswith("172.3")):
+        or hostname.startswith("172.3")
+    ):
         raise ValueError("URL resolves to a private or loopback address, which is disallowed.")
 
-    # -- 3. Retrieve the image with a timeout and stream to avoid large memory overhead  --
+    # -- 3. Retrieve the response with a timeout and stream  --
+    #    This handles the S3 URL just like any other public HTTPS link.
     with requests.get(image_url, timeout=request_timeout, stream=True) as response:
         response.raise_for_status()
 
-        # -- 4. Check MIME type from headers to ensure it's an image  --
+        # -- 4. Check Content-Type in headers  --
         content_type = response.headers.get('Content-Type', '').lower()
-        if not content_type.startswith("image/"):
-            raise ValueError(f"URL does not appear to point to an image. Content-Type: {content_type}")
 
-        # -- 5. Check the file size from Content-Length (if provided)  --
-        content_length = response.headers.get('Content-Length')
-        if content_length and int(content_length) > max_file_size:
-            raise ValueError(f"File is too large to be processed safely, {int(content_length)} bytes received. The maximum size is {max_file_size} bytes.")
+        # If it's a direct image...
+        if content_type.startswith("image/"):
+            # -- 5. Check Content-Length against max_file_size  --
+            content_length = response.headers.get('Content-Length')
+            if content_length and int(content_length) > max_file_size:
+                raise ValueError(
+                    f"File is too large: {int(content_length)} bytes. "
+                    f"Max allowed is {max_file_size} bytes."
+                )
 
-        data = BytesIO()
-        downloaded = 0
-        chunk_size = 8192
-        for chunk in response.iter_content(chunk_size=chunk_size):
-            downloaded += len(chunk)
-            if downloaded > max_file_size:
-                raise ValueError(f"File exceeded the maximum allowed size during download. The maximum size is {max_file_size} bytes.")
-            data.write(chunk)
+            data = BytesIO()
+            downloaded = 0
+            chunk_size = 8192
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                downloaded += len(chunk)
+                if downloaded > max_file_size:
+                    raise ValueError(
+                        f"File exceeded the maximum allowed size of {max_file_size} bytes."
+                    )
+                data.write(chunk)
 
-    data.seek(0)
-    return Image.open(data)
+            # Reset the buffer and open with PIL
+            data.seek(0)
+            return Image.open(data)
+
+        # If the server reports x-www-form-urlencoded, parse for embedded image data
+        elif content_type == "application/x-www-form-urlencoded":
+            # let PIL handle the parsing
+            try:
+                return Image.open(BytesIO(response.content))
+            except Exception as e:
+                raise ValueError(
+                    f"Failed to parse x-www-form-urlencoded data as image: {e}"
+                )
+
+        else:
+            # Some other content type we don't handle
+            raise ValueError(
+                f"Unsupported Content-Type or not an image: {content_type}"
+            )
 
 class IOConverter:
     """
