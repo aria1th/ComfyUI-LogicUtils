@@ -9,6 +9,42 @@ import gzip
 import re
 from urllib.parse import urlparse
 
+
+def handle_rgba_composite(
+    image: Image.Image, background_color=(255, 255, 255)
+) -> Image.Image:
+    """
+    Convert RGBA image to RGB image using alpha_composite.
+    """
+    mode = image.mode
+    if mode == "RGB":
+        return image
+    if mode == "RGBA":
+        # Create a white RGBA background
+        background = Image.new("RGBA", image.size, (255, 255, 255, 255))
+        # Composite the original image over the white background
+        composed = Image.alpha_composite(background, image)
+        # Convert back to RGB (now that background is flattened)
+        return composed.convert("RGB")
+    elif mode == "LA":
+        # "LA" is 8-bit grayscale + alpha.
+        rgba_image = image.convert("RGBA")
+        background = Image.new("RGBA", rgba_image.size, (*background_color, 255))
+        composed = Image.alpha_composite(background, rgba_image)
+        return composed.convert("RGB")
+
+    # 3. "L" or "1" = Grayscale or Black/White, "P" = Palette
+    elif mode in ["L", "1", "P"]:
+        # Simply converting to "RGB" is usually enough.
+        return image.convert("RGB")
+
+    # 4. "CMYK", "YCbCr", "HSV", etc.
+    elif mode in ["CMYK", "YCbCr", "HSV"]:
+        # Typically, a .convert("RGB") is enough if you just need an RGB version.
+        return image.convert("RGB")
+    print(f"Warning: Unhandled image mode: {mode}. Converting to RGB.")
+    return image.convert("RGB")
+
 def fetch_image_securely(image_url: str,
                         allowed_schemes=('http', 'https'),
                         max_file_size=5_000_000,
@@ -193,14 +229,17 @@ class IOConverter:
         elif input_type == IOConverter.InputType.GZIP_BASE64:
             decoded_data = IOConverter.read_base64(input_data)
             decompressed_data = gzip.decompress(decoded_data)
-            result = Image.open(BytesIO(decompressed_data)).convert("RGB")
+            partial_result = Image.open(BytesIO(decompressed_data))
+            result = handle_rgba_composite(partial_result)
             return result
         elif input_type == IOConverter.InputType.BASE64:
             decoded_data = IOConverter.read_base64(input_data)
-            result = Image.open(BytesIO(decoded_data)).convert("RGB")
+            partial_result = Image.open(BytesIO(decoded_data))
+            result = handle_rgba_composite(partial_result)
             return result
         elif input_type == IOConverter.InputType.URL:
-            result = fetch_image_securely(input_data)
+            partial_result = fetch_image_securely(input_data)
+            result = handle_rgba_composite(partial_result)
             return result
         else:
             raise Exception(f"Invalid input type, {input_type}")
@@ -280,7 +319,7 @@ class IOConverter:
         else:
             base64_data = base64.b64encode(buffered.getvalue()).decode('utf-8')
         return base64_data
-    
+
     @staticmethod
     def string_to_base64(input_string, gzip_compress=False):
         if gzip_compress:
