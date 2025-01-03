@@ -209,21 +209,21 @@ class IOConverter:
     def convert_to_pil(input_data):
         input_type = IOConverter.classify(input_data)
         if input_type == IOConverter.InputType.PIL:
-            return input_data
+            return handle_rgba_composite(input_data)
         elif input_type == IOConverter.InputType.NUMPY:
             # [1, 1216, 832, 3], '<f4'] -> [1216, 832, 3], 'uint8'
             # if not first element is 1, then it is a batch of images so warning
             if input_data.shape[0] != 1:
                 print("Warning: Batch of images detected, taking first image")
             input_data = IOConverter.match_dtype(input_data[0])
-            return Image.fromarray(input_data)
+            return handle_rgba_composite(Image.fromarray(input_data))
         elif input_type == IOConverter.InputType.TORCH:
             # same as above
             if input_data.shape[0] != 1:
                 print("Warning: Batch of images detected, taking first image")
             input_data = IOConverter.match_dtype(input_data[0], is_tensor=True)
             np_array = input_data.cpu().numpy()
-            return Image.fromarray(np_array)
+            return handle_rgba_composite(Image.fromarray(np_array))
         elif input_type == IOConverter.InputType.STRING:
             return Image.open(input_data)
         elif input_type == IOConverter.InputType.GZIP_BASE64:
@@ -248,6 +248,7 @@ class IOConverter:
     def to_tensor(pil_image):
         if pil_image.mode == "I":
             pil_image = pil_image.point(lambda i: i * (1/255))  # convert to float
+        pil_image = handle_rgba_composite(pil_image)
         np_array = np.array(pil_image).astype(np.float32) / 255.0
         tensor = torch.from_numpy(np_array)
         tensor = tensor.unsqueeze(0)  # Add batch dimension
