@@ -145,9 +145,9 @@ class ParseExifNode:
 
 def throw_if_parent_or_root_access(path):
     if ".." in path or path.startswith("/") or path.startswith("\\"):
-        raise RuntimeError("Invalid path")
+        raise RuntimeError("Tried to access parent or root directory")
     if path.startswith("~"):
-        raise RuntimeError("Invalid path")
+        raise RuntimeError("Tried to access home directory")
     if os.path.isabs(path):
         raise RuntimeError("Path cannot be absolute")
 
@@ -579,7 +579,7 @@ class ImageFromURLNode:
     @PILHandlingHodes.output_wrapper
     def url_download(url):
         if not url.startswith("http"): # for security reasons
-            raise RuntimeError("Invalid URL")
+            raise RuntimeError("Strict URL check is required, however the URL does not start with http")
         image = PILHandlingHodes.handle_input(url) # automatically downloads image
         return (image,)
     @classmethod
