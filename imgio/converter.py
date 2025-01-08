@@ -199,6 +199,11 @@ class IOConverter:
     @staticmethod
     def match_dtype(array_or_tensor, is_tensor=False):
         # if all value is between 0 and 1, multiply by 255 and convert to uint8
+        # however already uint8, skip
+        # check dtype first
+        if array_or_tensor.dtype == np.uint8 or array_or_tensor.dtype == torch.uint8:
+            return array_or_tensor
+
         if array_or_tensor.min() >= 0 and array_or_tensor.max() <= 1:
             multiplied = array_or_tensor * 255
             if not is_tensor:
