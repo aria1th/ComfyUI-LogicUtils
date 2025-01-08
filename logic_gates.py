@@ -402,7 +402,5 @@ class MemoryNode:
             self.memory_value = input1
         return (self.memory_value,)
 
-
-
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(classes)
 validate(classes)

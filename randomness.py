@@ -5,8 +5,14 @@ from .autonode import node_wrapper, get_node_names_mappings, validate
 
 classes = []
 node = node_wrapper(classes)
+
+class RandomGuaranteedClass:
+    @classmethod
+    def IS_CHANGED(s, *args, **kwargs):
+       return random.SystemRandom().random()
+    
 @node
-class SystemRandomFloat:
+class SystemRandomFloat(RandomGuaranteedClass):
     """
     Random number generator using system randomness
     """
@@ -37,7 +43,7 @@ class SystemRandomFloat:
        return random.SystemRandom().random()
 
 @node
-class SystemRandomInt:
+class SystemRandomInt(RandomGuaranteedClass):
     """
     Random number generator using system randomness
     Generates an integer value between 0 and 2^32-1
@@ -85,7 +91,7 @@ class SystemRandomInt:
        return random.SystemRandom().random()
 
 
-class UUIDGenerator:
+class UUIDGenerator(RandomGuaranteedClass):
     """
     Generates a random UUID
     """
@@ -114,7 +120,7 @@ class UUIDGenerator:
        return random.SystemRandom().random()
 
 @node
-class UniformRandomFloat:
+class UniformRandomFloat(RandomGuaranteedClass):
     """
     Selects a random float from min to max
     Fallbacks to default if min is greater than max
@@ -144,8 +150,9 @@ class UniformRandomFloat:
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
     custom_name = "Uniform Random Float"
+    
 @node
-class UniformRandomInt:
+class UniformRandomInt(RandomGuaranteedClass):
     """
     Selects a random int from min to max
     Fallbacks to default if min is greater than max
@@ -173,7 +180,7 @@ class UniformRandomInt:
     CATEGORY = "Logic Gates"
     custom_name = "Uniform Random Int"
 @node
-class UniformRandomChoice:
+class UniformRandomChoice(RandomGuaranteedClass):
     """
     Parses input string with separator '$' and returns a random choice
     separator can be changed in the input
@@ -280,7 +287,7 @@ class ManualChoiceFloat:
     custom_name = "Manual Choice Float"
 
 @node
-class RandomShuffleInt:
+class RandomShuffleInt(RandomGuaranteedClass):
     """
     Get the shuffled list of integers from start to end
     Input types and output types are lists of ints
@@ -307,7 +314,7 @@ class RandomShuffleInt:
     CATEGORY = "Logic Gates"
     custom_name = "Random Shuffle Int"
 @node
-class RandomShuffleFloat:
+class RandomShuffleFloat(RandomGuaranteedClass):
     """
     Get the shuffled list of floats from start to end
     Input types and output types are lists of floats
@@ -334,7 +341,7 @@ class RandomShuffleFloat:
     CATEGORY = "Logic Gates"
     custom_name = "Random Shuffle Float"
 @node
-class RandomShuffleString:
+class RandomShuffleString(RandomGuaranteedClass):
     """
     Get the shuffled list of strings from start to end
     Input types and output types are lists of strings
