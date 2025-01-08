@@ -11,12 +11,14 @@ from urllib.parse import urlparse
 
 
 def handle_rgba_composite(
-    image: Image.Image, background_color=(255, 255, 255)
+    image: Image.Image, background_color=(255, 255, 255), as_rgba=False
 ) -> Image.Image:
     """
     Convert RGBA image to RGB image using alpha_composite.
     """
     mode = image.mode
+    if as_rgba:
+        return image.convert("RGBA") # universal format
     if mode == "RGB":
         return image
     if mode == "RGBA":
@@ -245,14 +247,27 @@ class IOConverter:
             raise Exception(f"Invalid input type, {input_type}")
 
     @staticmethod
-    def to_tensor(pil_image):
+    def to_rgb_tensor(pil_image):
         if pil_image.mode == "I":
             pil_image = pil_image.point(lambda i: i * (1/255))  # convert to float
         pil_image = handle_rgba_composite(pil_image)
         np_array = np.array(pil_image).astype(np.float32) / 255.0
         tensor = torch.from_numpy(np_array)
         tensor = tensor.unsqueeze(0)  # Add batch dimension
-        # assert 4-dimensional tensor
+        # assert 4-dimensional tensor, B,C,H,W
+        if len(tensor.shape) != 4:
+            raise Exception(f"Invalid tensor shape, expected 4-dimensional tensor, got {tensor.shape}")
+        return tensor
+
+    @staticmethod
+    def to_rgba_tensor(pil_image):
+        if pil_image.mode == "I":
+            pil_image = pil_image.point(lambda i: i * (1/255))  # convert to float
+        pil_image = handle_rgba_composite(pil_image, as_rgba=True)
+        np_array = np.array(pil_image).astype(np.float32) / 255.0
+        tensor = torch.from_numpy(np_array)
+        tensor = tensor.unsqueeze(0)  # Add batch dimension
+        # assert 4-dimensional tensor, B,C,H,W
         if len(tensor.shape) != 4:
             raise Exception(f"Invalid tensor shape, expected 4-dimensional tensor, got {tensor.shape}")
         return tensor
@@ -272,10 +287,14 @@ class IOConverter:
         return result.decode('utf-8')
 
     @staticmethod
-    def convert_to_tensor(input_data):
+    def convert_to_rgb_tensor(input_data, rgba=False):
+        if not rgba:
+            output_func = IOConverter.to_rgb_tensor
+        else:
+            output_func = IOConverter.to_rgba_tensor
         input_type = IOConverter.classify(input_data)
         if input_type == IOConverter.InputType.PIL:
-            return IOConverter.to_tensor(input_data)
+            return output_func(input_data)
         elif input_type == IOConverter.InputType.NUMPY:
             # if all values are 0~1, skip
             if input_data.min() >= 0 and input_data.max() <= 1:
@@ -289,16 +308,16 @@ class IOConverter:
             return input_data
         elif input_type == IOConverter.InputType.STRING:
             image = Image.open(input_data)
-            return IOConverter.to_tensor(image)
+            return output_func(image)
         elif input_type == IOConverter.InputType.GZIP_BASE64:
             image = IOConverter.convert_to_pil(input_data)
-            return IOConverter.to_tensor(image)
+            return output_func(image)
         elif input_type == IOConverter.InputType.BASE64:
             image = IOConverter.convert_to_pil(input_data)
-            return IOConverter.to_tensor(image)
+            return output_func(image)
         elif input_type == IOConverter.InputType.URL:
             image = fetch_image_securely(input_data)
-            return IOConverter.to_tensor(image)
+            return output_func(image)
         else:
             raise Exception(f"Invalid input type, {input_type}")
 
@@ -344,8 +363,12 @@ class PILHandlingHodes:
         return pil_image
 
     @staticmethod
-    def handle_output_as_tensor(pil_image):
-        return IOConverter.convert_to_tensor(pil_image)
+    def handle_output_as_tensor(pil_image, rgba=False):
+        return IOConverter.convert_to_rgb_tensor(pil_image, rgba=rgba)
+
+    @staticmethod
+    def handle_output_as_rgba_tensor(pil_image):
+        return IOConverter.convert_to_rgb_tensor(pil_image, rgba=True)
 
     @staticmethod
     def output_wrapper(func):
@@ -355,6 +378,19 @@ class PILHandlingHodes:
             for output in outputs:
                 if isinstance(output, (Image.Image, torch.Tensor)):
                     tuples_collect.append(PILHandlingHodes.handle_output_as_tensor(output))
+                else:
+                    tuples_collect.append(output)
+            return tuple(tuples_collect)
+        return wrapped
+
+    @staticmethod
+    def rgba_output_wrapper(func):
+        def wrapped(*args, **kwargs):
+            outputs = func(*args, **kwargs)
+            tuples_collect = []
+            for output in outputs:
+                if isinstance(output, (Image.Image, torch.Tensor)):
+                    tuples_collect.append(PILHandlingHodes.handle_output_as_rgba_tensor(output))
                 else:
                     tuples_collect.append(output)
             return tuple(tuples_collect)
