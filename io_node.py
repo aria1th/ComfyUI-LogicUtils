@@ -20,6 +20,8 @@ from PIL import ImageEnhance
 from PIL.PngImagePlugin import PngInfo
 import folder_paths
 from comfy.cli_args import args
+import filelock
+import tempfile
 
 fundamental_classes = []
 fundamental_node = node_wrapper(fundamental_classes)
@@ -290,7 +292,8 @@ class SaveImageWebpCustomNode:
         throw_if_parent_or_root_access(subfolder_dir)
         filename_prefix += self.prefix_append
         output_dir = os.path.join(self.output_dir, subfolder_dir)
-        full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0])
+        filelock_path = os.path.join(output_dir, filename_prefix + ".lock")
+        
         results = list()
         for image in images:
             i = 255. * image.cpu().numpy()
@@ -315,17 +318,25 @@ class SaveImageWebpCustomNode:
                         piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(json.dumps(metadata) or "", encoding="unicode")
                     },
                 })
-            file = f"{filename}_{counter:05}_.webp"
-            img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=compression, quality=quality, lossless=lossless, optimize=optimize)
-            if piexif_loaded:
-                piexif.insert(exif_bytes, os.path.join(full_output_folder, file))
+            
+            with filelock.FileLock(filelock_path, timeout=10): # timeout 10 seconds should be enough for most cases
+                full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0])
+                counter_len = len(str(len(images))) # for padding
+                #file = f"{filename}_{counter:05}_.webp"
+                file = f"{filename}_{str(counter).zfill(max(5, counter_len))}_.webp"
+                with tempfile.NamedTemporaryFile(suffix=".webp", delete=False) as tmpfile:
+                    tmp_path = tmpfile.name
+                    img.save(tmp_path, "WEBP", pnginfo=metadata, compress_level=compression, quality=quality, lossless=lossless, optimize=optimize)
+                if piexif_loaded:
+                    piexif.insert(exif_bytes, tmp_path)
+                final_path = os.path.join(full_output_folder, file)
+                os.rename(tmp_path, final_path)
             
             results.append({
                 "filename": os.path.join(full_output_folder, file),
                 "subfolder": subfolder_dir,
                 "type": self.type
             })
-            counter += 1
 
         return { "ui": { "images": results }, "outputs": { "images": os.path.join(full_output_folder, file).rstrip('.webp') } }
 
