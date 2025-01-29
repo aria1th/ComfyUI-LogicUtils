@@ -14,6 +14,7 @@ from .imgio.converter import PILHandlingHodes
 from .autonode import node_wrapper, get_node_names_mappings, validate, anytype, PILImage
 import time
 import os
+import shutil
 from PIL import Image
 from PIL import ImageOps
 from PIL import ImageEnhance
@@ -330,7 +331,8 @@ class SaveImageWebpCustomNode:
                 if piexif_loaded:
                     piexif.insert(exif_bytes, tmp_path)
                 final_path = os.path.join(full_output_folder, file)
-                os.rename(tmp_path, final_path)
+                shutil.copy2(tmp_path, final_path)
+                os.remove(tmp_path)
             
             results.append({
                 "filename": os.path.join(full_output_folder, file),
