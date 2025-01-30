@@ -1,5 +1,6 @@
 import random
 import uuid
+import time
 from .autonode import node_wrapper, get_node_names_mappings, validate
 
 
@@ -9,7 +10,7 @@ node = node_wrapper(classes)
 class RandomGuaranteedClass:
     @classmethod
     def IS_CHANGED(s, *args, **kwargs):
-       return random.SystemRandom().random()
+       return float("nan")
     
 @node
 class SystemRandomFloat(RandomGuaranteedClass):
@@ -20,7 +21,7 @@ class SystemRandomFloat(RandomGuaranteedClass):
         pass
     @staticmethod
     def generate(min_val=0.0, max_val=1.0, precision=0):
-        instance = random.SystemRandom()
+        instance = random.SystemRandom(time.time())
         value = instance.uniform(min_val, max_val)
         if precision > 0:
             value = round(value, precision)
@@ -38,9 +39,7 @@ class SystemRandomFloat(RandomGuaranteedClass):
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
     custom_name = "System Random Float"
-    @classmethod
-    def IS_CHANGED(s, min_val, max_val, precision):
-       return random.SystemRandom().random()
+
 
 @node
 class SystemRandomInt(RandomGuaranteedClass):
@@ -53,7 +52,7 @@ class SystemRandomInt(RandomGuaranteedClass):
         pass
     @staticmethod
     def generate(min_val=0, max_val=2**32 - 1):
-        instance = random.SystemRandom()
+        instance = random.SystemRandom(time.time())
         value = instance.randint(min_val, max_val)
         return (value,)
     @classmethod
@@ -86,9 +85,7 @@ class SystemRandomInt(RandomGuaranteedClass):
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
     custom_name = "System Random Int"
-    @classmethod
-    def IS_CHANGED(s, min_val, max_val):
-       return random.SystemRandom().random()
+
 
 
 class UUIDGenerator(RandomGuaranteedClass):
@@ -115,9 +112,7 @@ class UUIDGenerator(RandomGuaranteedClass):
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
     custom_name = "UUID Generator"
-    @classmethod
-    def IS_CHANGED(s, length):
-       return random.SystemRandom().random()
+
 
 @node
 class UniformRandomFloat(RandomGuaranteedClass):
