@@ -59,6 +59,22 @@ def pixelate(image, pixelation_factor=0.1):
     # Upscale back to original size
     return small.resize(image.size, Image.NEAREST)
 
+
+def pixelate_target_tiles(image, max_tiles=100):
+    aspect_ratio = image.width / image.height
+    # solve h * a * h = max_tiles
+    h = int((max_tiles / aspect_ratio) ** 0.5)
+    w = int(aspect_ratio * h)
+    h, w = max(4, h), max(4, w)
+    # Downscale the image
+    small = image.resize(
+        (w, h),
+        resample=Image.NEAREST,
+    )
+    # Upscale back to original size
+    return small.resize(image.size, Image.NEAREST)
+
+
 @auxilary_node
 class CensorImageByRating:
     FUNCTION = "censor_image"
@@ -104,7 +120,7 @@ class CensorImageByRating:
             elif censor_method.lower() == "pixelate":
                 # first, blur
                 censored_image = image.filter(ImageFilter.GaussianBlur(radius=20))
-                censored_image = pixelate(censored_image, 0.05)
+                censored_image = pixelate_target_tiles(censored_image, max_tiles=100)
                 return (censored_image,)
 
         # If unknown method is provided, just return the original image
