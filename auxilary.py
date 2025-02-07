@@ -1,7 +1,7 @@
 from .imgio.converter import PILHandlingHodes
 from .autonode import node_wrapper, get_node_names_mappings, validate, anytype, PILImage
 from .utils.tagger import get_tags, tagger_keys
-from PIL import Image
+from PIL import Image, ImageFilter
 
 auxilary_classes = []
 auxilary_node = node_wrapper(auxilary_classes)
@@ -50,6 +50,15 @@ class GetRatingFromTextNode:
             }
         }
 
+def pixelate(image, pixelation_factor=0.1):
+    # Downscale the image
+    small = image.resize(
+        (int(image.width * pixelation_factor), int(image.height * pixelation_factor)),
+        resample=Image.NEAREST
+    )
+    # Upscale back to original size
+    return small.resize(image.size, Image.NEAREST)
+
 @auxilary_node
 class CensorImageByRating:
     FUNCTION = "censor_image"
@@ -89,9 +98,13 @@ class CensorImageByRating:
                 return (censored_image,)
 
             elif censor_method.lower() == "blur":
-                from PIL import ImageFilter
                 # Apply a strong blur (you can adjust radius as needed)
+                censored_image = image.filter(ImageFilter.GaussianBlur(radius=40))
+                return (censored_image,)
+            elif censor_method.lower() == "pixelate":
+                # first, blur
                 censored_image = image.filter(ImageFilter.GaussianBlur(radius=20))
+                censored_image = pixelate(censored_image, 0.05)
                 return (censored_image,)
 
         # If unknown method is provided, just return the original image
@@ -103,7 +116,7 @@ class CensorImageByRating:
             "required": {
                 "image": ("IMAGE",),
                 "rating_threshold": (["general", "sensitive", "questionable", "explicit"],),
-                "censor_method": (["blur", "white"],),
+                "censor_method": (["blur", "white","pixelate"],),
             },
             "optional": {
                 "model_name": (tagger_keys, {"default": tagger_keys[0]}),
@@ -191,7 +204,7 @@ class GetTagsAboveThresholdFromTextNode:
                 "model_name": (tagger_keys, {"default": tagger_keys[0]}),
             }
         }
-        
+
 @auxilary_node
 class GetCharactersAboveThresholdNode:
     FUNCTION = "get_tags_above_threshold"
