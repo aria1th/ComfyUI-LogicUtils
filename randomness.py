@@ -81,6 +81,12 @@ class DimensionSelectorWithSeedNode:
         div_w = width / multiples
         height = round(div_h) * multiples
         width = round(div_w) * multiples
+        # if width * height > resolution^2, reduce width or height
+        if width * height > desired_area:
+            if random.choice([True, False]):
+                width = width - multiples
+            else:
+                height = height - multiples
         return (width, height)
         
 
