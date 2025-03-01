@@ -71,35 +71,18 @@ class DimensionSelectorWithSeedNode:
         random.seed(seed)
 
         desired_area = resolution * resolution
-        best_diff = float("inf")
-        best_candidates = []
-
-        # Adjust search bounds as desired
-        max_dim = 2 * resolution
-
-        for h in range(multiples, max_dim + 1, multiples):
-            min_w_float = h * min_ratio
-            max_w_float = h * max_ratio
-
-            min_w = math.ceil(min_w_float / multiples) * multiples
-            max_w = math.floor(max_w_float / multiples) * multiples
-
-            if min_w > max_w:
-                continue
-
-            for w in range(min_w, max_w + 1, multiples):
-                area = w * h
-                diff = abs(desired_area - area)
-
-                if diff < best_diff:
-                    best_diff = diff
-                    best_candidates = [(w, h)]
-                elif diff == best_diff:
-                    best_candidates.append((w, h))
-
-        # If there's more than one "best" solution, choose randomly
-        best_width, best_height = random.choice(best_candidates)
-        return (best_width, best_height)
+        ratio = random.uniform(min_ratio, max_ratio)
+        # width * height = resolution^2, width/height = ratio
+        # thus h**2 = resolution^2 / ratio
+        height = int(math.sqrt(desired_area / ratio))
+        width = int(desired_area / height)
+        # round to nearest multiple
+        div_h = height / multiples
+        div_w = width / multiples
+        height = round(div_h) * multiples
+        width = round(div_w) * multiples
+        return (width, height)
+        
 
 @node
 class SystemRandomInt(RandomGuaranteedClass):
