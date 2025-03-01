@@ -1,3 +1,4 @@
+import math
 import random
 import uuid
 import time
@@ -40,6 +41,65 @@ class SystemRandomFloat(RandomGuaranteedClass):
     CATEGORY = "Logic Gates"
     custom_name = "System Random Float"
 
+@node
+class DimensionSelectorWithSeedNode:
+    """
+    Finds (width, height) such that width*height is near (resolution^2),
+    ratio = width/height is in [min_ratio, max_ratio],
+    both are multiples of 'multiples', and uses 'seed' for random tie-break.
+    """
+    RETURN_TYPES = ("INT", "INT")
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "resolution": ("INT", {"default": 1024}),
+                "min_ratio": ("FLOAT", {"default": 0.6}),
+                "max_ratio": ("FLOAT", {"default": 1.6}),
+                "multiples": ("INT", {"default": 32}),
+                "seed": ("INT", {"default": 0}),
+            }
+        }
+
+    FUNCTION = "select_dimensions"
+    CATEGORY = "Logic Gates"
+    custom_name = "Random Width/Height with Resolution"
+
+    def select_dimensions(self, resolution, min_ratio, max_ratio, multiples, seed):
+        # For reproducible randomness
+        random.seed(seed)
+
+        desired_area = resolution * resolution
+        best_diff = float("inf")
+        best_candidates = []
+
+        # Adjust search bounds as desired
+        max_dim = 2 * resolution
+
+        for h in range(multiples, max_dim + 1, multiples):
+            min_w_float = h * min_ratio
+            max_w_float = h * max_ratio
+
+            min_w = math.ceil(min_w_float / multiples) * multiples
+            max_w = math.floor(max_w_float / multiples) * multiples
+
+            if min_w > max_w:
+                continue
+
+            for w in range(min_w, max_w + 1, multiples):
+                area = w * h
+                diff = abs(desired_area - area)
+
+                if diff < best_diff:
+                    best_diff = diff
+                    best_candidates = [(w, h)]
+                elif diff == best_diff:
+                    best_candidates.append((w, h))
+
+        # If there's more than one "best" solution, choose randomly
+        best_width, best_height = random.choice(best_candidates)
+        return (best_width, best_height)
 
 @node
 class SystemRandomInt(RandomGuaranteedClass):
