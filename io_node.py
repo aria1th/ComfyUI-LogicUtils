@@ -301,8 +301,13 @@ class SaveImageWebpCustomNode:
         for image in images:
             i = 255. * image.cpu().numpy()
             clipped = np.clip(i, 0, 255).astype(np.uint8)
-            if clipped.shape[0] <= 3:
+            if clipped.shape[0] == 3:
                 clipped = np.transpose(clipped, (1, 2, 0)) #[1216, 832, 3]
+            # if 2-channel image, we don't have to clip but we have to convert to 3-channel (RGB)
+            elif clipped.shape[0] == 2:
+                single_channel = clipped[0:1, :, :]
+                repeated = np.repeat(single_channel, 3, axis=0)  
+                clipped = np.transpose(repeated, (1, 2, 0)) #[1216, 832, 3] # ummmm anyway
             img = Image.fromarray(clipped)
             metadata = None
             if not args.disable_metadata:
