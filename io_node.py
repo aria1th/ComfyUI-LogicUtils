@@ -299,11 +299,16 @@ class SaveImageWebpCustomNode:
         
         results = list()
         for image in images:
-            i = 255. * image.cpu().numpy()
-            clipped = np.clip(i, 0, 255).astype(np.uint8)
-            if clipped.shape[0] <= 3:
-                clipped = np.transpose(clipped, (1, 2, 0)) #[1216, 832, 3]
-            img = Image.fromarray(clipped)
+            if isinstance(image, torch.Tensor):
+                if image.device.type != "cpu":
+                    image = image.cpu()
+                image = 255. * image.numpy()
+                clipped = np.clip(image, 0, 255).astype(np.uint8)
+                if clipped.shape[0] <= 3:
+                    clipped = np.transpose(clipped, (1, 2, 0)) #[1216, 832, 3]
+                img = Image.fromarray(clipped)
+            else:
+                img = PILHandlingHodes.handle_input(image)
             metadata = None
             if not args.disable_metadata:
                 metadata = {}
