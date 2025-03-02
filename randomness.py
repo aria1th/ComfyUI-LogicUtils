@@ -136,7 +136,7 @@ class SystemRandomInt(RandomGuaranteedClass):
     custom_name = "System Random Int"
 
 
-
+@node
 class UUIDGenerator(RandomGuaranteedClass):
     """
     Generates a random UUID
