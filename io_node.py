@@ -328,7 +328,7 @@ class SaveImageWebpCustomNode:
                 })
             
             with filelock.FileLock(filelock_path, timeout=10): # timeout 10 seconds should be enough for most cases
-                full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0])
+                full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, img.size[1], img.size[0])
                 counter_len = len(str(len(images))) # for padding
                 #file = f"{filename}_{counter:05}_.webp"
                 file = f"{filename}_{str(counter).zfill(max(5, counter_len))}_.webp"
