@@ -289,7 +289,7 @@ class SaveImageWebpCustomNode:
     def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None, quality=100, lossless=False, compression=4, optimize=False, metadata_string=""):
         if images is None: # sometimes images is empty
             images = []
-        if not isinstance(images, (list, tuple)):
+        if not isinstance(images, (list, tuple, torch.Tensor)):
             images = [images]
         throw_if_parent_or_root_access(filename_prefix)
         throw_if_parent_or_root_access(subfolder_dir)
