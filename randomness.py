@@ -413,6 +413,61 @@ class RandomShuffleString(RandomGuaranteedClass):
     custom_name = "Random Shuffle String"
 
 @node
+class CounterInteger:
+    """
+    Generates a counter that increments by 1
+    """
+    def __init__(self):
+        self.counter = None
+    def generate(self, reset, start):
+        if self.counter is None:
+            self.counter = start
+        if reset:
+            self.counter = 0
+        self.counter += 1
+        return (self.counter,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "reset": ("BOOLEAN"),
+            },
+            "optional": {
+                "start": ("INT", { "default": 0, "min": -999999999, "max": 9999999999, "step": 1, "display": "number" }),
+            },
+        }
+    RETURN_TYPES = ("INT",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Counter Integer"
+    
+@node
+class CounterFloat:
+    """
+    Generates a counter that increments by 1
+    """
+    def __init__(self):
+        self.counter = None
+    def generate(self, reset, start, step):
+        if reset:
+            self.counter = start
+        self.counter += step
+        return (self.counter,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "reset": ("BOOLEAN"),
+                "start": ("FLOAT", { "default": 0.0, "min": -99999999999.0, "max": 9999999999.0, "step": 1.0, "display": "number" }),
+                "step": ("FLOAT", { "default": 1.0, "min": -99999999999.0, "max": 9999999999.0, "step": 1.0, "display": "number" }),
+            },
+        }
+    RETURN_TYPES = ("FLOAT",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Counter Float"
+
+@node
 class YieldableIteratorString:
     """
     Yields sequentially from the input list (with separator)
@@ -436,7 +491,7 @@ class YieldableIteratorString:
             "required": {
                 "input_string": ("STRING", { "default": "a$b$c", "display": "text" }),
                 "separator": ("STRING", { "default": "$", "display": "text" }),
-                "reset": ("INT", { "default": 0, "min": 0, "max": 1, "step": 1, "display": "number" }),
+                "reset": ("BOOLEAN"),
             },
         }
     RETURN_TYPES = ("STRING",)
@@ -471,10 +526,10 @@ class YieldableIteratorInt:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "start": ("INT", { "default": 0, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
-                "end": ("INT", { "default": 10, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
-                "step": ("INT", { "default": 1, "min": 0, "max": 9999999999, "step": 1, "display": "number" }),
-                "reset": ("INT", { "default": 0, "min": 0, "max": 1, "step": 1, "display": "number" }),
+                "start": ("INT", { "default": 0, "min": -9999999999, "max": 9999999999, "step": 1, "display": "number" }),
+                "end": ("INT", { "default": 10, "min": -9999999999, "max": 9999999999, "step": 1, "display": "number" }),
+                "step": ("INT", { "default": 1, "min": -9999999999, "max": 9999999999, "step": 1, "display": "number" }),
+                "reset": ("BOOLEAN"),
             },
         }
 
