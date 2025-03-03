@@ -458,8 +458,8 @@ class CounterFloat:
         return {
             "required": {
                 "reset": ("BOOLEAN"),
-                "start": ("FLOAT", { "default": 0.0, "min": -(2**64-1), "max": (2**64-1), "step": 1.0, "display": "number" }),
-                "step": ("FLOAT", { "default": 1.0, "min": -(2**64-1), "max": (2**64-1), "step": 1.0, "display": "number" }),
+                "start": ("FLOAT", { "default": 0.0, "min": -float(sys.maxsize), "max": float(sys.maxsize), "step": 1.0, "display": "number" }),
+                "step": ("FLOAT", { "default": 1.0, "min": -float(sys.maxsize), "max": float(sys.maxsize), "step": 1.0, "display": "number" }),
             },
         }
     RETURN_TYPES = ("FLOAT",)
