@@ -260,6 +260,92 @@ class SaveTextCustomNode:
         return { "ui": { "texts": results }, "outputs": { "images": file.rstrip('.txt') } }
 
 @fundamental_node
+class DumpTextJsonlNode:
+    """
+    Appends text to a JSONL file (one JSON object per line).
+    Each line will have the structure: { "<keyname>": "<text_item>" }
+
+    For concurrency safety, this node uses filelock to block
+    concurrent writes to the same file.
+    """
+    FUNCTION = "dump_text_jsonl"
+    RETURN_TYPES = ("STRING",)  # We return the filename for convenience
+    CATEGORY = "text"
+    custom_name = "Dump Text JSONL Node"
+    RESULT_NODE = True
+    OUTPUT_NODE = True
+
+    def __init__(self):
+        self.output_dir = folder_paths.get_output_directory()
+        self.type = "output"  # for consistent UI listing
+        self.prefix_append = ""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        """
+        text can be a single string or a list of strings. 
+        If it's a list, each item is appended as a separate line.
+        """
+        return {
+            "required": {
+                "text": (anytype, ),  # Single string or list of strings
+                "filename_prefix": ("STRING", {"default": "ComfyUI"}),
+                "subfolder_dir": ("STRING", {"default": ""}),
+                "filename": ("STRING", {"default": "dump.jsonl"}),
+                "keyname": ("STRING", {"default": "text"}),
+            },
+        }
+
+    def dump_text_jsonl(
+        self,
+        text,
+        filename_prefix="ComfyUI",
+        subfolder_dir="",
+        filename="dump.jsonl",
+        keyname="text",
+    ):
+        # Security checks to avoid writing outside of the ComfyUI output folder
+        throw_if_parent_or_root_access(filename_prefix)
+        throw_if_parent_or_root_access(subfolder_dir)
+
+        # Build the actual output path
+        filename_prefix += self.prefix_append  # If you want to append something
+        output_dir = os.path.join(self.output_dir, subfolder_dir)
+        os.makedirs(output_dir, exist_ok=True)
+
+        final_filename = filename_prefix + "_" + filename
+        full_path = os.path.join(output_dir, final_filename)
+        lock_path = full_path + ".lock"
+
+        # Ensure we can safely write concurrently
+        with filelock.FileLock(lock_path, timeout=10):
+            with open(full_path, "a", encoding="utf-8") as f:
+                # If `text` is a list, write each element as its own JSON line
+                if isinstance(text, list):
+                    for item in text:
+                        # Convert each item to string, just to be safe
+                        line = {keyname: str(item)}
+                        f.write(json.dumps(line, ensure_ascii=False) + "\n")
+                else:
+                    # Single string input
+                    line = {keyname: str(text)}
+                    f.write(json.dumps(line, ensure_ascii=False) + "\n")
+
+        # Return data for UI usage
+        results = [
+            {
+                "filename": final_filename,
+                "subfolder": subfolder_dir,
+                "type": self.type
+            }
+        ]
+        return {
+            "ui": {"texts": results},
+            "outputs": {"filename": final_filename},
+        }
+    
+
+@fundamental_node
 class SaveImageWebpCustomNode:
     def __init__(self):
         self.output_dir = folder_paths.get_output_directory()
