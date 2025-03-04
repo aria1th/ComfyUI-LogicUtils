@@ -137,7 +137,7 @@ class SystemRandomInt(RandomGuaranteedClass):
 
 
 @node
-class UUIDGenerator(RandomGuaranteedClass):
+class SystemUUIDGenerator(RandomGuaranteedClass):
     """
     Generates a random UUID
     """
@@ -194,7 +194,177 @@ class UniformRandomFloat(RandomGuaranteedClass):
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
     custom_name = "Uniform Random Float"
-    
+
+@node
+class TriangularRandomFloat(RandomGuaranteedClass):
+    """
+    Selects a random float from min to max
+    Fallbacks to default if min is greater than max
+    """
+    def __init__(self):
+        pass
+    def generate(self, low, high, mode, seed=0):
+        if low > high:
+            return low
+        instance = random.Random(seed)
+        value = instance.triangular(low, high, mode)
+        return (value,)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "low": ("FLOAT", { "default": 0.0, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
+                "high": ("FLOAT", { "default": 1.0, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
+                "mode": ("FLOAT", { "default": 0.5, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+            },
+        }
+    RETURN_TYPES = ("FLOAT",)
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Triangular Random Float"
+
+@node
+class WeightedRandomChoice(RandomGuaranteedClass):
+    """
+    Randomly choose one item from a list with weights.
+    The input string is parsed as "value|weight$value2|weight2..."
+    Example: "apple|10$banana|1$orange|3"
+    """
+    def __init__(self):
+        pass
+
+    def generate(self, input_string, separator, seed=0):
+        # Example input: "apple|10$banana|1$orange|3"
+        # Split by '$' -> ["apple|10", "banana|1", "orange|3"]
+        items = input_string.split(separator)
+        choices = []
+        weights = []
+        for item in items:
+            if '|' in item:
+                val, wt = item.split('|', 1)
+                choices.append(val)
+                try:
+                    weights.append(float(wt))
+                except ValueError:
+                    weights.append(1.0)
+            else:
+                # fallback if no weight specified
+                choices.append(item)
+                weights.append(1.0)
+
+        instance = random.Random(seed)
+        chosen = instance.choices(population=choices, weights=weights, k=1)[0]
+        return (chosen,)
+
+    RETURN_TYPES = ("STRING",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "input_string": ("STRING", {"default": "apple|10$banana|1$orange|3", "display": "text"}),
+                "separator": ("STRING", {"default": "$", "display": "text"}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2**64-1, "step": 1, "display": "number"}),
+            }
+        }
+
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Weighted Random Choice"
+
+@node
+class RandomGaussianFloat(RandomGuaranteedClass):
+    """
+    Generates a random float from a normal (Gaussian) distribution
+    with specified mean and std_dev.
+    """
+    def __init__(self):
+        pass
+
+    def generate(self, mean, std_dev, decimal_places, seed=0):
+        instance = random.Random(seed)
+        value = instance.gauss(mean, std_dev)
+        value = round(value, decimal_places)
+        return (value,)
+
+    RETURN_TYPES = ("FLOAT",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "mean": ("FLOAT", {"default": 0.0, "min": -999999999, "max": 999999999.0, "step": 0.01}),
+                "std_dev": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 999999999.0, "step": 0.01}),
+                "decimal_places": ("INT", {"default": 2, "min": 0, "max": 10, "step": 1}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2**64-1, "step": 1}),
+            },
+        }
+
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Random Gaussian Float"
+
+@node
+class SystemRandomGaussianFloat(RandomGuaranteedClass):
+    """
+    Generates a random float from a normal (Gaussian) distribution
+    with specified mean and std_dev.
+    """
+    def __init__(self):
+        pass
+
+    def generate(self, mean, std_dev, decimal_places):
+        instance = random.SystemRandom(time.time())
+        value = instance.gauss(mean, std_dev)
+        value = round(value, decimal_places)
+        return (value,)
+
+    RETURN_TYPES = ("FLOAT",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "mean": ("FLOAT", {"default": 0.0, "min": -999999999, "max": 999999999.0, "step": 0.01}),
+                "std_dev": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 999999999.0, "step": 0.01}),
+                "decimal_places": ("INT", {"default": 2, "min": 0, "max": 10, "step": 1}),
+            },
+        }
+
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "System Random Gaussian Float"
+
+@node
+class ProbabilityGate(RandomGuaranteedClass):
+    """
+    Returns TRUE with probability p, FALSE otherwise.
+    """
+    def __init__(self):
+        pass
+
+    def generate(self, probability, seed=0):
+        instance = random.Random(seed)
+        value = instance.random()  # uniform in [0,1)
+        return (value < probability,)
+
+    RETURN_TYPES = ("BOOLEAN",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "probability": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2**64-1, "step": 1}),
+            },
+        }
+
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Probability Gate"
+
+
 @node
 class UniformRandomInt(RandomGuaranteedClass):
     """
@@ -458,8 +628,8 @@ class CounterFloat:
         return {
             "required": {
                 "reset": ("BOOLEAN"),
-                "start": ("FLOAT", { "default": 0.0, "min": -(2**64-1)9.0, "max": (2**64-1).0, "step": 1.0, "display": "number" }),
-                "step": ("FLOAT", { "default": 1.0, "min": -(2**64-1)9.0, "max": (2**64-1).0, "step": 1.0, "display": "number" }),
+                "start": ("FLOAT", { "default": 0.0, "min": -(2**64-1), "max": (2**64-1), "step": 1.0, "display": "number" }),
+                "step": ("FLOAT", { "default": 1.0, "min": -(2**64-1), "max": (2**64-1), "step": 1.0, "display": "number" }),
             },
         }
     RETURN_TYPES = ("FLOAT",)

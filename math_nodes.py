@@ -143,6 +143,44 @@ class PowerNode:
             raise OverflowError("Power is too large, exceeds 100 digits")
         return (math.pow(input1, power),)
 
+@node
+class SigmoidNode:
+    """
+    Returns the sigmoid of a number
+    """
+    RETURN_TYPES = ("FLOAT",)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+        "required": {
+            "input1": ("FLOAT",),
+        }
+    }
+    FUNCTION = "sigmoid"
+    CATEGORY = "Math"
+    custom_name = "Sigmoid"
+    def sigmoid(self, input1):
+        return (1 / (1 + math.exp(-input1)),)
+
+@node
+class RAMPNode:
+    """
+    Returns the ramp of a number
+    """
+    RETURN_TYPES = ("FLOAT",)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+        "required": {
+            "input1": ("FLOAT",),
+        }
+    }
+    FUNCTION = "ramp"
+    CATEGORY = "Math"
+    custom_name = "RAMP"
+    def ramp(self, input1):
+        return (max(0, input1),)
+
 class ModuloNode:
     """
     Returns the modulo of a number

@@ -84,6 +84,39 @@ class ErrorNode:
         }
 
 @fundamental_node
+class CurrentTimestamp:
+    """
+    Returns the current Unix timestamp or a formatted time string.
+    """
+    def __init__(self):
+        pass
+
+    def generate(self, format_string):
+        if format_string.strip() == "":
+            # return Unix timestamp
+            return (int(time.time()),)
+        else:
+            # return formatted date/time
+            return (time.strftime(format_string, time.localtime()),)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "format_string": ("STRING", {
+                    "default": "",
+                    "display": "text",
+                    "comment": "Leave blank for raw timestamp, or use format directives like '%Y-%m-%d %H:%M:%S'"
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)  # or ("INT",) if returning raw int timestamp
+    FUNCTION = "generate"
+    CATEGORY = "Logic Gates"
+    custom_name = "Current Timestamp"
+
+@fundamental_node
 class DebugComboInputNode:
     FUNCTION = "debug_combo_input"
     RETURN_TYPES = ("STRING",)
