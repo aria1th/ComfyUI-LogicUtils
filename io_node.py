@@ -138,7 +138,7 @@ class DebugComboInputNode:
 @fundamental_node
 class TextPreviewNode:
     """
-    Displays text in the UI
+    Can't display text but it makes always changed state
     """
     FUNCTION = "text_preview"
     RETURN_TYPES = ()
@@ -158,6 +158,9 @@ class TextPreviewNode:
                 "text": (anytype,{"default": "text", "type" : "output"}),
             }
         }
+    @classmethod
+    def IS_CHANGED(s, *args, **kwargs):
+        return float("nan")
 
 @fundamental_node
 class ParseExifNode:
