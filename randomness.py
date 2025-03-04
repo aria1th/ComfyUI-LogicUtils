@@ -11,7 +11,7 @@ node = node_wrapper(classes)
 class RandomGuaranteedClass:
     @classmethod
     def IS_CHANGED(s, *args, **kwargs):
-       return float("nan")
+       return float("NaN")
     
 @node
 class SystemRandomFloat(RandomGuaranteedClass):
@@ -595,7 +595,7 @@ class CounterInteger(RandomGuaranteedClass):
         if reset:
             self.counter = 0
         self.counter += 1
-        return (self.counter,)
+        return (int(self.counter),)
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -606,6 +606,7 @@ class CounterInteger(RandomGuaranteedClass):
                 "reset": ("BOOLEAN", { "default": False }),
             },
         }
+    
     RETURN_TYPES = ("INT",)
     FUNCTION = "generate"
     CATEGORY = "Logic Gates"
@@ -619,6 +620,8 @@ class CounterFloat(RandomGuaranteedClass):
     def __init__(self):
         self.counter = None
     def generate(self, reset, start, step):
+        if self.counter is None:
+            self.counter = start
         if reset:
             self.counter = start
         self.counter += step
