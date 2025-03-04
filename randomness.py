@@ -599,10 +599,8 @@ class CounterInteger(RandomGuaranteedClass):
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": {
-                "reset": ("BOOLEAN"),
-            },
             "optional": {
+                "reset": ("BOOLEAN", { "default": False }),
                 "start": ("INT", { "default": 0, "min": -999999999, "max": (2**64-1), "step": 1, "display": "number" }),
             },
         }
@@ -626,7 +624,7 @@ class CounterFloat(RandomGuaranteedClass):
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": {
+            "optional": {
                 "reset": ("BOOLEAN"),
                 "start": ("FLOAT", { "default": 0.0, "min": -(2**64-1), "max": (2**64-1), "step": 1.0, "display": "number" }),
                 "step": ("FLOAT", { "default": 1.0, "min": -(2**64-1), "max": (2**64-1), "step": 1.0, "display": "number" }),
