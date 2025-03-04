@@ -1,8 +1,23 @@
 import json
 import os
 
-
 from .autonode import node_wrapper, get_node_names_mappings, validate, anytype
+
+##############################################################################
+# "NewPointer" BASE CLASS
+##############################################################################
+
+class NewPointer:
+    """A base class that forces ComfyUI to skip caching by returning NaN in IS_CHANGED."""
+    RESULT_NODE = True  # Typically means the node can appear as a "result" in the graph
+    OUTPUT_NODE = True  # Typically means the node can appear as an "output" in the graph
+    @classmethod
+    def IS_CHANGED(cls, *args, **kwargs):
+        return float("NaN")  # Forces ComfyUI to consider it always changed
+
+##############################################################################
+#  HELPER: Throw if path tries to escape
+##############################################################################
 
 def throw_if_parent_or_root_access(path):
     if ".." in path or path.startswith("/") or path.startswith("\\"):
@@ -11,6 +26,7 @@ def throw_if_parent_or_root_access(path):
         raise RuntimeError("Tried to access home directory")
     if os.path.isabs(path):
         raise RuntimeError("Path cannot be absolute")
+
 ##############################################################################
 # REGISTER CLASSES BELOW
 ##############################################################################
@@ -19,16 +35,18 @@ fundamental_classes = []
 fundamental_node = node_wrapper(fundamental_classes)
 
 ############################
-#  JSON NODES
+#  GLOBALS & JSON NODES
 ############################
 
+GLOBAL_STORAGE = {}  # For global variable set/get
+
 @fundamental_node
-class JsonParseNode:
+class JsonParseNode(NewPointer):
     """
     Convert JSON string into a Python object (dict, list, etc.) stored in 'anytype'.
     """
     FUNCTION = "parse_json"
-    RETURN_TYPES = (anytype,)  # We'll store Python object in a generic container
+    RETURN_TYPES = (anytype,)
     CATEGORY = "Data"
     custom_name="Pyobjects/JSON -> PyObject"
 
@@ -48,9 +66,8 @@ class JsonParseNode:
             }
         }
 
-
 @fundamental_node
-class JsonDumpNode:
+class JsonDumpNode(NewPointer):
     """
     Convert a Python object (dict, list, etc.) into a JSON string.
     """
@@ -75,9 +92,8 @@ class JsonDumpNode:
             }
         }
 
-
 @fundamental_node
-class JsonDumpAnyStructureNode:
+class JsonDumpAnyStructureNode(NewPointer):
     """
     Dump either DICT or LIST or SET (any Python structure) into JSON string.
     """
@@ -101,13 +117,12 @@ class JsonDumpAnyStructureNode:
             }
         }
 
-
 ############################
 #  DICT NODES
 ############################
 
 @fundamental_node
-class DictCreateNode:
+class DictCreateNode(NewPointer):
     """
     Creates a new empty dictionary (type DICT).
     """
@@ -124,9 +139,8 @@ class DictCreateNode:
     def INPUT_TYPES(cls):
         return {"required": {}}
 
-
 @fundamental_node
-class DictSetNode:
+class DictSetNode(NewPointer):
     """
     dict[key] = value. Returns the updated dict.
     """
@@ -152,9 +166,8 @@ class DictSetNode:
             }
         }
 
-
 @fundamental_node
-class DictGetNode:
+class DictGetNode(NewPointer):
     """
     Returns dict[key]. If key not found, returns None.
     """
@@ -178,9 +191,8 @@ class DictGetNode:
             }
         }
 
-
 @fundamental_node
-class DictRemoveKeyNode:
+class DictRemoveKeyNode(NewPointer):
     """
     Removes a key from the dictionary (if present). Returns the updated dict.
     """
@@ -205,9 +217,8 @@ class DictRemoveKeyNode:
             }
         }
 
-
 @fundamental_node
-class DictMergeNode:
+class DictMergeNode(NewPointer):
     """
     Merges two dictionaries. 
     If there are duplicate keys, the second dict's values overwrite the first.
@@ -226,7 +237,6 @@ class DictMergeNode:
             dict_a.update(dict_b)
             return (dict_a,)
         else:
-            # Return a new merged dict
             merged = {**dict_a, **dict_b}
             return (merged,)
 
@@ -242,9 +252,8 @@ class DictMergeNode:
             }
         }
 
-
 @fundamental_node
-class DictKeysNode:
+class DictKeysNode(NewPointer):
     """
     Returns the list of keys in a dictionary as type LIST.
     """
@@ -268,9 +277,8 @@ class DictKeysNode:
             }
         }
 
-
 @fundamental_node
-class DictValuesNode:
+class DictValuesNode(NewPointer):
     """
     Returns the list of values in a dictionary as type LIST.
     """
@@ -294,9 +302,8 @@ class DictValuesNode:
             }
         }
 
-
 @fundamental_node
-class DictItemsNode:
+class DictItemsNode(NewPointer):
     """
     Returns the list of (key, value) pairs in a dictionary as type LIST.
     Each item in the list is a 2-element tuple [key, value].
@@ -321,9 +328,8 @@ class DictItemsNode:
             }
         }
 
-
 @fundamental_node
-class DictPointer:
+class DictPointer(NewPointer):
     """
     Example of a stateful node: holds onto the incoming dict until reset.
     """
@@ -356,28 +362,26 @@ class DictPointer:
                 "reset": ("BOOLEAN",),
             },
         }
+
 ############################
-GLOBAL_STORAGE = {} 
+#  GLOBAL VAR NODES
+############################
 
 @fundamental_node
-class GlobalVarSetNode:
+class GlobalVarSetNode(NewPointer):
     """
     Store a Python object in a global dictionary under the given key.
     Returns the same value that was stored, as anytype.
-    
-    WARNING: Global storage persists only within this ComfyUI session
-    (or until reloaded). Keys are NOT automatically namespaced. 
     """
     FUNCTION = "global_var_set"
     RETURN_TYPES = (anytype,)
     CATEGORY = "Data"
     custom_name="Pyobjects/Global Var Set"
 
-    @staticmethod
-    def global_var_set(key, value):
+    def global_var_set(self, key, value):
         GLOBAL_STORAGE[key] = value
-        
-        return (value,)  # Return the stored value for convenience
+        print("GlobalVarSetNode:", GLOBAL_STORAGE)
+        return (value,)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -389,21 +393,20 @@ class GlobalVarSetNode:
         }
 
 @fundamental_node
-class GlobalVarSetIfNotExistsNode:
+class GlobalVarSetIfNotExistsNode(NewPointer):
     """
-    Store a Python object in a global dictionary under the given key, if key doesn't exist.
+    Store a Python object in a global dictionary under the given key, only if the key doesn't already exist.
     """
-    FUNCTION = "global_var_set"
+    FUNCTION = "global_var_set_if_not_exists"
     RETURN_TYPES = (anytype,)
     CATEGORY = "Data"
-    custom_name="Pyobjects/Global Var Set"
+    custom_name="Pyobjects/Global Var Set If Not Exists"
 
-    @staticmethod
-    def global_var_set(key, value):
+    def global_var_set_if_not_exists(self, key, value):
         if key not in GLOBAL_STORAGE:
             GLOBAL_STORAGE[key] = value
-        
-        return (value,)  # Return the stored value for convenience
+        print("GlobalVarSetIfNotExistsNode:", GLOBAL_STORAGE)
+        return (GLOBAL_STORAGE[key],)  # Return the final stored value
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -413,22 +416,20 @@ class GlobalVarSetIfNotExistsNode:
                 "value": (anytype, {"default": "my_value"}),
             }
         }
+
 @fundamental_node
-class GlobalVarGetNode:
+class GlobalVarGetNode(NewPointer):
     """
     Retrieve a Python object from the global dictionary by key.
-    If not found, returns None by default (or raises an error, if you prefer).
+    If not found, returns None by default.
     """
     FUNCTION = "global_var_get"
     RETURN_TYPES = (anytype,)
     CATEGORY = "Data"
     custom_name="Pyobjects/Global Var Get"
 
-    @staticmethod
-    def global_var_get(key):
-        # If key not in GLOBAL_STORAGE, return None 
-        
-        # (you could also raise an error if you want to enforce existence).
+    def global_var_get(self, key):
+        print("GlobalVarGetNode:", GLOBAL_STORAGE)
         return (GLOBAL_STORAGE.get(key, None),)
 
     @classmethod
@@ -440,7 +441,7 @@ class GlobalVarGetNode:
         }
 
 @fundamental_node
-class GlobalVarRemoveNode:
+class GlobalVarRemoveNode(NewPointer):
     """
     Remove a key from the global dictionary (if present).
     Returns the value that was removed, or None if key didn't exist.
@@ -450,9 +451,7 @@ class GlobalVarRemoveNode:
     CATEGORY = "Data"
     custom_name="Pyobjects/Global Var Remove"
 
-    @staticmethod
-    def global_var_remove(key):
-        # pop returns the removed value, or None if key not found
+    def global_var_remove(self, key):
         removed_value = GLOBAL_STORAGE.pop(key, None)
         return (removed_value,)
 
@@ -463,38 +462,31 @@ class GlobalVarRemoveNode:
                 "key": ("STRING", {"default": "my_key"}),
             }
         }
+
 @fundamental_node
-class GlobalVarSaveNode:
+class GlobalVarSaveNode(NewPointer):
     """
     Saves the value of GLOBAL_STORAGE[key] to a JSON file on disk.
     If the key isn't in storage, returns an error or saves None if allow_missing=True.
-    
-    Note:
-    - By default, we do no path security checks (beyond the optional commented code).
-      If you want to prevent writing outside certain directories, implement it yourself.
     """
     FUNCTION = "global_var_save"
     RETURN_TYPES = ("STRING",)  # Return the filepath that was saved
     CATEGORY = "Data"
     custom_name="Pyobjects/Global Var Save"
 
-    @staticmethod
-    def global_var_save(key, filepath, allow_missing=False):
+    def global_var_save(self, key, filepath, allow_missing=False):
         throw_if_parent_or_root_access(filepath)
 
         value = GLOBAL_STORAGE.get(key, None)
         if value is None and not allow_missing and key not in GLOBAL_STORAGE:
             raise KeyError(f"Global key '{key}' not found in storage. Set allow_missing=True to save None.")
 
-        # Ensure the directory exists
         dir_ = os.path.dirname(filepath)
         if dir_ and not os.path.exists(dir_):
             os.makedirs(dir_, exist_ok=True)
 
-        # Write to disk
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(value, f, ensure_ascii=False, indent=4)
-
         return (filepath,)
 
     @classmethod
@@ -509,27 +501,22 @@ class GlobalVarSaveNode:
             }
         }
 
-
 @fundamental_node
-class GlobalVarLoadNode:
+class GlobalVarLoadNode(NewPointer):
     """
     Loads JSON from a file and stores it in GLOBAL_STORAGE under the given key.
     Returns the loaded value.
-    
-    If file doesn't exist, raises an error (unless allow_missing=True, which sets None).
     """
     FUNCTION = "global_var_load"
-    RETURN_TYPES = (anytype,)  # Return the loaded value
+    RETURN_TYPES = (anytype,)
     CATEGORY = "Data"
     custom_name="Pyobjects/Global Var Load"
 
-    @staticmethod
-    def global_var_load(key, filepath, allow_missing=False):
+    def global_var_load(self, key, filepath, allow_missing=False):
         throw_if_parent_or_root_access(filepath)
 
         if not os.path.exists(filepath):
             if allow_missing:
-                # store None
                 GLOBAL_STORAGE[key] = None
                 return (None,)
             else:
@@ -537,7 +524,6 @@ class GlobalVarLoadNode:
 
         with open(filepath, "r", encoding="utf-8") as f:
             value = json.load(f)
-
         GLOBAL_STORAGE[key] = value
         return (value,)
 
@@ -558,7 +544,7 @@ class GlobalVarLoadNode:
 ############################
 
 @fundamental_node
-class ListCreateNode:
+class ListCreateNode(NewPointer):
     """
     Creates a new empty list (type LIST).
     """
@@ -575,9 +561,8 @@ class ListCreateNode:
     def INPUT_TYPES(cls):
         return {"required": {}}
 
-
 @fundamental_node
-class ListAppendNode:
+class ListAppendNode(NewPointer):
     """
     Append an item to a Python list. Returns the updated list.
     """
@@ -602,9 +587,8 @@ class ListAppendNode:
             }
         }
 
-
 @fundamental_node
-class ListGetNode:
+class ListGetNode(NewPointer):
     """
     Return an element from a list by index as anytype.
     """
@@ -630,9 +614,8 @@ class ListGetNode:
             }
         }
 
-
 @fundamental_node
-class ListRemoveNode:
+class ListRemoveNode(NewPointer):
     """
     Removes the first occurrence of 'item' from the list (if present).
     Returns the updated list.
@@ -659,12 +642,11 @@ class ListRemoveNode:
             }
         }
 
-
 @fundamental_node
-class ListPopNode:
+class ListPopNode(NewPointer):
     """
     Pop an item from the list by index. 
-    Returns ( popped_item, updated_list ).
+    Returns (popped_item, updated_list).
     """
     FUNCTION = "list_pop"
     RETURN_TYPES = (anytype, "LIST")
@@ -691,9 +673,8 @@ class ListPopNode:
             }
         }
 
-
 @fundamental_node
-class ListInsertNode:
+class ListInsertNode(NewPointer):
     """
     Insert an item into the list at a given index.
     Returns the updated list.
@@ -720,9 +701,8 @@ class ListInsertNode:
             }
         }
 
-
 @fundamental_node
-class ListExtendNode:
+class ListExtendNode(NewPointer):
     """
     Extends list A by appending elements from list B. Returns the updated list A.
     """
@@ -747,9 +727,8 @@ class ListExtendNode:
             }
         }
 
-
 @fundamental_node
-class ToListTypeNode:
+class ToListTypeNode(NewPointer):
     """
     Takes any Python object that is actually iterable, returns it as type LIST.
     (Casts dicts/sets/tuples to list by calling list(obj).)
@@ -761,8 +740,6 @@ class ToListTypeNode:
 
     @staticmethod
     def to_list_type(py_obj):
-        # Allowed transformations: tuple -> list, set -> list, dict -> list of keys, etc.
-        # If you want different logic for dict, you can customize below:
         if isinstance(py_obj, dict):
             # e.g. we can choose to return keys or something else
             return (list(py_obj.keys()),)
@@ -779,11 +756,15 @@ class ToListTypeNode:
             }
         }
 
+############################
+#  SET NODES
+############################
+
 @fundamental_node
-class ToSetTypeNode:
+class ToSetTypeNode(NewPointer):
     """
-    Takes any Python object that is actually iterable, returns it as type SET.
-    (Casts dicts/lists/tuples to set by calling set(obj).)
+    Takes any Python object that is iterable, returns it as type SET.
+    (Casts dict/list/tuple to set(obj). For dict, uses dict.keys().)
     """
     FUNCTION = "to_set_type"
     RETURN_TYPES = ("SET",)
@@ -792,10 +773,7 @@ class ToSetTypeNode:
 
     @staticmethod
     def to_set_type(py_obj):
-        # Allowed transformations: tuple -> set, list -> set, dict -> set of keys, etc.
-        # If you want different logic for dict, you can customize below:
         if isinstance(py_obj, dict):
-            # e.g. we can choose to return keys or something else
             return (set(py_obj.keys()),)
         try:
             return (set(py_obj),)
@@ -810,12 +788,8 @@ class ToSetTypeNode:
             }
         }
 
-############################
-#  SET NODES
-############################
-
 @fundamental_node
-class SetCreateNode:
+class SetCreateNode(NewPointer):
     """
     Creates a new empty set (type SET).
     """
@@ -832,9 +806,8 @@ class SetCreateNode:
     def INPUT_TYPES(cls):
         return {"required": {}}
 
-
 @fundamental_node
-class SetAddNode:
+class SetAddNode(NewPointer):
     """
     Adds an item to a set.
     """
@@ -859,9 +832,8 @@ class SetAddNode:
             }
         }
 
-
 @fundamental_node
-class SetRemoveNode:
+class SetRemoveNode(NewPointer):
     """
     Removes an item from the set (if present).
     """
@@ -874,7 +846,7 @@ class SetRemoveNode:
     def set_remove(py_set, item):
         if not isinstance(py_set, set):
             raise ValueError("Input must be a Python set")
-        py_set.discard(item)  # discard won't error if item isn't present
+        py_set.discard(item)
         return (py_set,)
 
     @classmethod
@@ -886,9 +858,8 @@ class SetRemoveNode:
             }
         }
 
-
 @fundamental_node
-class SetUnionNode:
+class SetUnionNode(NewPointer):
     """
     Returns the union of two sets.
     """
@@ -912,9 +883,8 @@ class SetUnionNode:
             }
         }
 
-
 @fundamental_node
-class SetIntersectionNode:
+class SetIntersectionNode(NewPointer):
     """
     Returns the intersection of two sets.
     """
@@ -938,9 +908,8 @@ class SetIntersectionNode:
             }
         }
 
-
 @fundamental_node
-class SetDifferenceNode:
+class SetDifferenceNode(NewPointer):
     """
     Returns the difference of two sets: A - B.
     """
@@ -964,9 +933,8 @@ class SetDifferenceNode:
             }
         }
 
-
 @fundamental_node
-class SetSymDifferenceNode:
+class SetSymDifferenceNode(NewPointer):
     """
     Returns the symmetric difference (elements in A or B but not both).
     """
@@ -990,9 +958,8 @@ class SetSymDifferenceNode:
             }
         }
 
-
 @fundamental_node
-class SetClearNode:
+class SetClearNode(NewPointer):
     """
     Clears all elements from the set. Returns the now-empty set.
     """
@@ -1016,9 +983,8 @@ class SetClearNode:
             }
         }
 
-
 @fundamental_node
-class SetToListNode:
+class SetToListNode(NewPointer):
     """
     Converts a set to a list. Returns the list as type LIST.
     """
