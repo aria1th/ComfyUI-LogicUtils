@@ -9,6 +9,8 @@ classes = []
 node = node_wrapper(classes)
 
 class RandomGuaranteedClass:
+    OUTPUT_NODE = True
+    RESULT_NODE = True
     @classmethod
     def IS_CHANGED(s, *args, **kwargs):
        return float("NaN")
