@@ -583,7 +583,7 @@ class RandomShuffleString(RandomGuaranteedClass):
     custom_name = "Random Shuffle String"
 
 @node
-class CounterInteger:
+class CounterInteger(RandomGuaranteedClass):
     """
     Generates a counter that increments by 1
     """
@@ -612,7 +612,7 @@ class CounterInteger:
     custom_name = "Counter Integer"
     
 @node
-class CounterFloat:
+class CounterFloat(RandomGuaranteedClass):
     """
     Generates a counter that increments by 1
     """
@@ -638,7 +638,7 @@ class CounterFloat:
     custom_name = "Counter Float"
 
 @node
-class YieldableIteratorString:
+class YieldableIteratorString(RandomGuaranteedClass):
     """
     Yields sequentially from the input list (with separator)
     If reset is True, then it starts from the beginning
@@ -670,7 +670,7 @@ class YieldableIteratorString:
     custom_name = "Yieldable Iterator String"
 
 @node
-class YieldableIteratorInt:
+class YieldableIteratorInt(RandomGuaranteedClass):
     """
     Yields sequentially with start, end, step
     Resets if reset is True

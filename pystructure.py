@@ -376,6 +376,7 @@ class GlobalVarSetNode:
     @staticmethod
     def global_var_set(key, value):
         GLOBAL_STORAGE[key] = value
+        
         return (value,)  # Return the stored value for convenience
 
     @classmethod
@@ -387,6 +388,31 @@ class GlobalVarSetNode:
             }
         }
 
+@fundamental_node
+class GlobalVarSetIfNotExistsNode:
+    """
+    Store a Python object in a global dictionary under the given key, if key doesn't exist.
+    """
+    FUNCTION = "global_var_set"
+    RETURN_TYPES = (anytype,)
+    CATEGORY = "Data"
+    custom_name="Pyobjects/Global Var Set"
+
+    @staticmethod
+    def global_var_set(key, value):
+        if key not in GLOBAL_STORAGE:
+            GLOBAL_STORAGE[key] = value
+        
+        return (value,)  # Return the stored value for convenience
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "key": ("STRING", {"default": "my_key"}),
+                "value": (anytype, {"default": "my_value"}),
+            }
+        }
 @fundamental_node
 class GlobalVarGetNode:
     """
@@ -401,6 +427,7 @@ class GlobalVarGetNode:
     @staticmethod
     def global_var_get(key):
         # If key not in GLOBAL_STORAGE, return None 
+        
         # (you could also raise an error if you want to enforce existence).
         return (GLOBAL_STORAGE.get(key, None),)
 
