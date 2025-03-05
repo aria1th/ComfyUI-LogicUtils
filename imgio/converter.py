@@ -1,3 +1,4 @@
+from typing import Union, List
 from PIL import Image
 import numpy as np
 import base64
@@ -221,13 +222,25 @@ class IOConverter:
             # [1, 1216, 832, 3], '<f4'] -> [1216, 832, 3], 'uint8'
             # if not first element is 1, then it is a batch of images so warning
             if input_data.shape[0] != 1:
-                print("Warning: Batch of images detected, taking first image")
+                result = []
+                for i in range(input_data.shape[0]):
+                    np_array = IOConverter.match_dtype(input_data[i])
+                    result.append(handle_rgba_composite(Image.fromarray(np_array)))
+                return result # return list of PIL images
             input_data = IOConverter.match_dtype(input_data[0])
             return handle_rgba_composite(Image.fromarray(input_data))
         elif input_type == IOConverter.InputType.TORCH:
             # same as above
             if input_data.shape[0] != 1:
-                print("Warning: Batch of images detected, taking first image")
+                result = []
+                for i in range(input_data.shape[0]):
+                    np_array = (
+                        IOConverter.match_dtype(input_data[i], is_tensor=True)
+                        .cpu()
+                        .numpy()
+                    )
+                    result.append(handle_rgba_composite(Image.fromarray(np_array)))
+                return result
             input_data = IOConverter.match_dtype(input_data[0], is_tensor=True)
             np_array = input_data.cpu().numpy()
             return handle_rgba_composite(Image.fromarray(np_array))
@@ -359,20 +372,20 @@ class IOConverter:
 
 class PILHandlingHodes:
     @staticmethod
-    def handle_input(tensor_or_image):
+    def handle_input(tensor_or_image) -> Union[Image.Image, List[Image.Image]]:
         pil_image = IOConverter.convert_to_pil(tensor_or_image)
         return pil_image
 
     @staticmethod
-    def handle_output_as_pil(pil_image):
+    def handle_output_as_pil(pil_image: Image.Image) -> Image.Image:
         return pil_image
 
     @staticmethod
-    def handle_output_as_tensor(pil_image, rgba=False):
+    def handle_output_as_tensor(pil_image: Image.Image, rgba=False) -> torch.Tensor:
         return IOConverter.convert_to_rgb_tensor(pil_image, rgba=rgba)
 
     @staticmethod
-    def handle_output_as_rgba_tensor(pil_image):
+    def handle_output_as_rgba_tensor(pil_image: Image.Image) -> torch.Tensor:
         return IOConverter.convert_to_rgb_tensor(pil_image, rgba=True)
 
     @staticmethod
