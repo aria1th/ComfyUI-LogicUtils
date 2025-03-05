@@ -1,5 +1,6 @@
 import base64
 import json
+import math
 import numpy as np
 import torch
 try:
@@ -291,7 +292,6 @@ class SaveTextCustomNode:
             "subfolder": subfolder,
             "type": self.type
         })
-        counter += 1
 
         return { "ui": { "texts": results }, "outputs": { "images": file.rstrip('.txt') } }
 
@@ -379,7 +379,269 @@ class DumpTextJsonlNode:
             "ui": {"texts": results},
             "outputs": {"filename": final_filename},
         }
-    
+
+
+@fundamental_node
+class ConcatGridNode:
+    """
+    Concatenate multiple images in a row, a column, or a square-like grid
+    using either resizing or padding to match dimensions.
+
+    direction:
+        - "horizontal": line up side by side
+        - "vertical": stack top to bottom
+        - "square-like": arrange images in an NxN grid (where N = ceil(sqrt(#images)))
+
+    match_method:
+        - "resize": scale images so their matching dimension is the same
+                    (height for horizontal, width for vertical, or cell-size for square-like)
+        - "pad": keep original size but add transparent padding so the matching dimension is the same
+    """
+
+    FUNCTION = "concat_grid"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Concat Grid (Batch to single grid)"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "direction": (
+                    ["horizontal", "vertical", "square-like"],
+                    {"default": "horizontal"},
+                ),
+                "match_method": (["resize", "pad"], {"default": "resize"}),
+            }
+        }
+
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def concat_grid(images, direction="horizontal", match_method="resize"):
+        # 1) Convert images input to a list of PIL RGBA images
+        #    - If it's a torch.Tensor with shape (B, C, H, W) or a single image, unify into list.
+        if not (
+            isinstance(images, torch.Tensor) and len(images.shape) == 4
+        ) and not isinstance(images, (list, tuple)):
+            images = [images]
+
+        converted = PILHandlingHodes.handle_input(images)  # returns PIL or list of PIL
+        if isinstance(converted, list):
+            pil_images = [img.convert("RGBA") for img in converted]
+        else:
+            pil_images = [converted.convert("RGBA")]
+
+        if len(pil_images) == 0:
+            raise RuntimeError("No images provided to Concat Grid")
+
+        # 2) Handle the three layout directions
+        if direction == "horizontal":
+            # --- Horizontal layout ---
+            max_height = max(img.height for img in pil_images)
+            processed = []
+            for img in pil_images:
+                if match_method == "resize":
+                    # Scale the image so that height == max_height
+                    if img.height == 0:
+                        raise RuntimeError("Encountered an image of zero height.")
+                    ratio = max_height / float(img.height)
+                    new_w = int(img.width * ratio)
+                    new_h = max_height
+                    new_img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                else:  # "pad"
+                    # Create a new image with the same width but max_height
+                    new_img = Image.new("RGBA", (img.width, max_height), (0, 0, 0, 0))
+                    new_img.paste(img, (0, 0))
+                processed.append(new_img)
+
+            total_width = sum(im.width for im in processed)
+            out = Image.new("RGBA", (total_width, max_height), (0, 0, 0, 0))
+            x_offset = 0
+            for im in processed:
+                out.paste(im, (x_offset, 0))
+                x_offset += im.width
+
+        elif direction == "vertical":
+            # --- Vertical layout ---
+            max_width = max(img.width for img in pil_images)
+            processed = []
+            for img in pil_images:
+                if match_method == "resize":
+                    if img.width == 0:
+                        raise RuntimeError("Encountered an image of zero width.")
+                    ratio = max_width / float(img.width)
+                    new_w = max_width
+                    new_h = int(img.height * ratio)
+                    new_img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                else:  # "pad"
+                    new_img = Image.new("RGBA", (max_width, img.height), (0, 0, 0, 0))
+                    new_img.paste(img, (0, 0))
+                processed.append(new_img)
+
+            total_height = sum(im.height for im in processed)
+            out = Image.new("RGBA", (max_width, total_height), (0, 0, 0, 0))
+            y_offset = 0
+            for im in processed:
+                out.paste(im, (0, y_offset))
+                y_offset += im.height
+
+        else:  # direction == "square-like"
+            # --- Square-like NxN grid ---
+            count = len(pil_images)
+            # Determine grid size
+            num_cols = int(math.ceil(math.sqrt(count)))
+            num_rows = int(math.ceil(count / num_cols))
+
+            # Find maximum width/height among images
+            max_width = max(img.width for img in pil_images)
+            max_height = max(img.height for img in pil_images)
+
+            processed = []
+            for img in pil_images:
+                if match_method == "resize":
+                    # Here we forcibly resize each image to (max_width, max_height)
+                    # (which may distort if aspect ratios differ).
+                    new_img = img.resize(
+                        (max_width, max_height), Image.Resampling.LANCZOS
+                    )
+                else:  # "pad"
+                    # Keep original size but create a new RGBA canvas so each cell is (max_w, max_h)
+                    new_img = Image.new("RGBA", (max_width, max_height), (0, 0, 0, 0))
+                    new_img.paste(img, (0, 0))
+                processed.append(new_img)
+
+            # Create the final output canvas
+            grid_width = num_cols * max_width
+            grid_height = num_rows * max_height
+            out = Image.new("RGBA", (grid_width, grid_height), (0, 0, 0, 0))
+
+            # Paste images in row-major order
+            idx = 0
+            for row in range(num_rows):
+                for col in range(num_cols):
+                    if idx >= count:
+                        break  # no more images
+                    x_offset = col * max_width
+                    y_offset = row * max_height
+                    out.paste(processed[idx], (x_offset, y_offset))
+                    idx += 1
+
+        return (out,)
+
+
+@fundamental_node
+class ConcatTwoImagesNode:
+    """
+    Concatenate exactly two images (imageA, imageB).
+
+    direction:
+        - "horizontal": line them up side by side
+        - "vertical": place them top to bottom
+
+    match_method:
+        - "resize": scale images so their matching dimension is the same
+          (height for horizontal, width for vertical)
+        - "pad": keep original size but pad them so the matching dimension is the same
+    """
+
+    FUNCTION = "concat_two_images"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "Concat 2 Images to Grid"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "imageA": ("IMAGE",),
+                "imageB": ("IMAGE",),
+                "direction": (["horizontal", "vertical"], {"default": "horizontal"}),
+                "match_method": (["resize", "pad"], {"default": "resize"}),
+            }
+        }
+
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def concat_two_images(
+        imageA, imageB, direction="horizontal", match_method="resize"
+    ):
+        # Convert input to PIL images (RGBA to preserve alpha if needed)
+        pilA = PILHandlingHodes.handle_input(imageA)
+        if isinstance(pilA, list):
+            raise RuntimeError("Expected a single image for imageA, grid only supports two images")
+        pilB = PILHandlingHodes.handle_input(imageB)
+        if isinstance(pilB, list):
+            raise RuntimeError("Expected a single image for imageB, grid only supports two images")
+        if direction == "horizontal":
+            # We want to unify heights
+            max_h = max(pilA.height, pilB.height)
+
+            if match_method == "resize":
+                # Scale each image so their heights match
+                def scale_height(img, target_h):
+                    if img.height == 0:
+                        raise RuntimeError("Encountered an image with zero height.")
+                    ratio = target_h / float(img.height)
+                    new_w = int(img.width * ratio)
+                    new_h = target_h
+                    return img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+                pilA = scale_height(pilA, max_h)
+                pilB = scale_height(pilB, max_h)
+
+            else:  # match_method == "pad"
+                # Pad images with transparent background so they share the same height
+                def pad_height(img, target_h):
+                    new_img = Image.new("RGBA", (img.width, target_h), (0, 0, 0, 0))
+                    new_img.paste(img, (0, 0))
+                    return new_img
+
+                pilA = pad_height(pilA, max_h)
+                pilB = pad_height(pilB, max_h)
+
+            total_width = pilA.width + pilB.width
+            out = Image.new("RGBA", (total_width, max_h), (0, 0, 0, 0))
+            # Paste images side by side
+            out.paste(pilA, (0, 0))
+            out.paste(pilB, (pilA.width, 0))
+
+        else:
+            # direction == "vertical"
+            # We want to unify widths
+            max_w = max(pilA.width, pilB.width)
+
+            if match_method == "resize":
+                # Scale each image so their widths match
+                def scale_width(img, target_w):
+                    if img.width == 0:
+                        raise RuntimeError("Encountered an image with zero width.")
+                    ratio = target_w / float(img.width)
+                    new_w = target_w
+                    new_h = int(img.height * ratio)
+                    return img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+                pilA = scale_width(pilA, max_w)
+                pilB = scale_width(pilB, max_w)
+
+            else:  # match_method == "pad"
+                # Pad images with transparent background so they share the same width
+                def pad_width(img, target_w):
+                    new_img = Image.new("RGBA", (target_w, img.height), (0, 0, 0, 0))
+                    new_img.paste(img, (0, 0))
+                    return new_img
+
+                pilA = pad_width(pilA, max_w)
+                pilB = pad_width(pilB, max_w)
+
+            total_height = pilA.height + pilB.height
+            out = Image.new("RGBA", (max_w, total_height), (0, 0, 0, 0))
+            # Paste images top to bottom
+            out.paste(pilA, (0, 0))
+            out.paste(pilB, (0, pilA.height))
+
+        return (out,)
+
 
 @fundamental_node
 class SaveImageWebpCustomNode:
@@ -926,7 +1188,7 @@ class ConvertGreyscaleNode:
                 "image": ("IMAGE",),
             }
         }
-        
+
 @fundamental_node
 class RotateImageNode:
     FUNCTION = "rotate_image"
