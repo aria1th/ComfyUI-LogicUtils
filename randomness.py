@@ -102,7 +102,7 @@ class SystemRandomInt(RandomGuaranteedClass):
     def __init__(self):
         pass
     @staticmethod
-    def generate(min_val=0, max_val=2**64-1):
+    def generate(min_val=0, max_val=2**63-1):
         instance = random.SystemRandom(time.time())
         value = instance.randint(min_val, max_val)
         return (value,)
@@ -114,8 +114,8 @@ class SystemRandomInt(RandomGuaranteedClass):
                     "INT",
                     {
                         "default": 0,
-                        "min": -(2**64-1),
-                        "max": 2**64-1,
+                        "min": -(2**63-1),
+                        "max": 2**63-1,
                         "step": 1,
                         "display": "number",
                     },
@@ -123,9 +123,9 @@ class SystemRandomInt(RandomGuaranteedClass):
                 "max_val": (
                     "INT",
                     {
-                        "default": 2**64-1,
-                        "min": -(2**64-1),
-                        "max": 2**64-1,
+                        "default": 2**63-1,
+                        "min": -(2**63-1),
+                        "max": 2**63-1,
                         "step": 1,
                         "display": "number",
                     },
@@ -189,7 +189,7 @@ class UniformRandomFloat(RandomGuaranteedClass):
                 "min_val": ("FLOAT", { "default": 0.0, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
                 "max_val": ("FLOAT", { "default": 1.0, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
                 "decimal_places": ("INT", { "default": 1, "min": 0, "max": 10, "step": 1, "display": "number" }),
-                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("FLOAT",)
@@ -218,7 +218,7 @@ class TriangularRandomFloat(RandomGuaranteedClass):
                 "low": ("FLOAT", { "default": 0.0, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
                 "high": ("FLOAT", { "default": 1.0, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
                 "mode": ("FLOAT", { "default": 0.5, "min": -999999999, "max": 999999999.0, "step": 0.02, "display": "number" }),
-                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("FLOAT",)
@@ -267,7 +267,7 @@ class WeightedRandomChoice(RandomGuaranteedClass):
             "required": {
                 "input_string": ("STRING", {"default": "apple|10$banana|1$orange|3", "display": "text"}),
                 "separator": ("STRING", {"default": "$", "display": "text"}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 2**64-1, "step": 1, "display": "number"}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2**63-1, "step": 1, "display": "number"}),
             }
         }
 
@@ -299,7 +299,7 @@ class RandomGaussianFloat(RandomGuaranteedClass):
                 "mean": ("FLOAT", {"default": 0.0, "min": -999999999, "max": 999999999.0, "step": 0.01}),
                 "std_dev": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 999999999.0, "step": 0.01}),
                 "decimal_places": ("INT", {"default": 2, "min": 0, "max": 10, "step": 1}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 2**64-1, "step": 1}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2**63-1, "step": 1}),
             },
         }
 
@@ -358,7 +358,7 @@ class ProbabilityGate(RandomGuaranteedClass):
         return {
             "required": {
                 "probability": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 2**64-1, "step": 1}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2**63-1, "step": 1}),
             },
         }
 
@@ -388,7 +388,7 @@ class UniformRandomInt(RandomGuaranteedClass):
             "required": {
                 "min_val": ("INT", { "default": 0, "min": -999999999, "max": 999999999, "step": 1, "display": "number" }),
                 "max_val": ("INT", { "default": 1, "min": -999999999, "max": 999999999, "step": 1, "display": "number" }),
-                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("INT",)
@@ -414,7 +414,7 @@ class UniformRandomChoice(RandomGuaranteedClass):
             "required": {
                 "input_string": ("STRING", { "default": "a$b$c", "display": "text" }),
                 "separator": ("STRING", { "default": "$", "display": "text" }),
-                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("STRING",)
@@ -440,7 +440,7 @@ class ManualChoiceString:
             "required": {
                 "input_string": ("STRING", { "default": "a$b$c", "display": "text" }),
                 "separator": ("STRING", { "default": "$", "display": "text" }),
-                "index": ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "index": ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("STRING",)
@@ -467,7 +467,7 @@ class ManualChoiceInt:
             "required": {
                 "input_string": ("STRING", { "default": "1$2$3", "display": "text" }),
                 "separator": ("STRING", { "default": "$", "display": "text" }),
-                "index": ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "index": ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("INT",)
@@ -494,7 +494,7 @@ class ManualChoiceFloat:
             "required": {
                 "input_string": ("STRING", { "default": "1.0$2.0$3.0", "display": "text" }),
                 "separator": ("STRING", { "default": "$", "display": "text" }),
-                "index": ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "index": ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("FLOAT",)
@@ -522,7 +522,7 @@ class RandomShuffleInt(RandomGuaranteedClass):
             "required": {
                 "input_string": ("STRING", { "default": "1$2$3", "display": "text" }),
                 "separator": ("STRING", { "default": "$", "display": "text" }),
-                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("STRING",)
@@ -549,7 +549,7 @@ class RandomShuffleFloat(RandomGuaranteedClass):
             "required": {
                 "input_string": ("STRING", { "default": "1.0$2.0$3.0", "display": "text" }),
                 "separator": ("STRING", { "default": "$", "display": "text" }),
-                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("STRING",)
@@ -576,7 +576,7 @@ class RandomShuffleString(RandomGuaranteedClass):
             "required": {
                 "input_string": ("STRING", { "default": "a$b$c", "display": "text" }),
                 "separator": ("STRING", { "default": "$", "display": "text" }),
-                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**64-1), "step": 1, "display": "number" }),
+                "seed" : ("INT", { "default": 0, "min": 0, "max": (2**63-1), "step": 1, "display": "number" }),
             },
         }
     RETURN_TYPES = ("STRING",)
@@ -602,7 +602,7 @@ class CounterInteger(RandomGuaranteedClass):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "start": ("FLOAT", { "default": 0.0, "min": -(2**64-1), "max": (2**64-1), "step": 1.0, "display": "number" }),
+                "start": ("FLOAT", { "default": 0.0, "min": -(2**63-1), "max": (2**63-1), "step": 1.0, "display": "number" }),
             },
             "optional": {
                 "reset": ("BOOLEAN", { "default": False }),
@@ -632,11 +632,11 @@ class CounterFloat(RandomGuaranteedClass):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "start": ("FLOAT", { "default": 0.0, "min": -(2**64-1), "max": (2**64-1), "step": 1.0, "display": "number" }),
+                "start": ("FLOAT", { "default": 0.0, "min": -(2**63-1), "max": (2**63-1), "step": 1.0, "display": "number" }),
             },
             "optional": {
                 "reset": ("BOOLEAN"),
-                "step": ("FLOAT", { "default": 1.0, "min": -(2**64-1), "max": (2**64-1), "step": 1.0, "display": "number" }),
+                "step": ("FLOAT", { "default": 1.0, "min": -(2**63-1), "max": (2**63-1), "step": 1.0, "display": "number" }),
             },
         }
     RETURN_TYPES = ("FLOAT",)
@@ -703,9 +703,9 @@ class YieldableIteratorInt(RandomGuaranteedClass):
     def INPUT_TYPES(s):
         return {
             "required": {
-                "start": ("INT", { "default": 0, "min": -(2**64-1), "max": (2**64-1), "step": 1, "display": "number" }),
-                "end": ("INT", { "default": 10, "min": -(2**64-1), "max": (2**64-1), "step": 1, "display": "number" }),
-                "step": ("INT", { "default": 1, "min": -(2**64-1), "max": (2**64-1), "step": 1, "display": "number" }),
+                "start": ("INT", { "default": 0, "min": -(2**63-1), "max": (2**63-1), "step": 1, "display": "number" }),
+                "end": ("INT", { "default": 10, "min": -(2**63-1), "max": (2**63-1), "step": 1, "display": "number" }),
+                "step": ("INT", { "default": 1, "min": -(2**63-1), "max": (2**63-1), "step": 1, "display": "number" }),
                 "reset": ("BOOLEAN"),
             },
         }
