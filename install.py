@@ -48,6 +48,11 @@ def initialization():
         from imgutils.tagging import get_wd14_tags
     except ImportError:
         run_installation("dghs-imgutils[gpu]")
+    try:
+        from Crypto.PublicKey import RSA
+    except ImportError:
+        run_installation("pycryptodome")
+
 
 def run_installation(pkg_name: str):
     print(f"Installing {pkg_name}...")

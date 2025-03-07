@@ -204,6 +204,26 @@ class LogicGateCompareString:
     custom_name = "AContainsB(String)"
     def compareString(self, regex, input2):
         return (True if re.search(regex, input2) else False,)
+
+@node
+class GetLengthString:
+    """
+    Returns the length of the input string
+    """
+    RETURN_TYPES = ("INT",)
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+        "required": {
+            "string": ("STRING", {"default": ""}),
+        }
+    }
+    FUNCTION = "lengthString"
+    CATEGORY = "Logic Gates"
+    custom_name = "Length of String"
+    def lengthString(self, string):
+        return (len(string),)
+
 @node
 class StaticNumberInt:
     """
