@@ -642,6 +642,108 @@ class ConcatTwoImagesNode:
 
         return (out,)
 
+@fundamental_node
+class SaveCustomJPGNode:
+    def __init__(self):
+        self.output_dir = folder_paths.get_output_directory()
+        self.type = "output"
+        self.prefix_append = ""
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "filename_prefix": ("STRING", {"default": "ComfyUI"}),
+                "subfolder_dir": ("STRING", {"default": ""}),
+            },
+            "optional": {
+                "quality": ("INT", {"default": 95}),
+                "optimize": ("BOOLEAN", {"default": True}),
+                "metadata_string": ("STRING", {"default": ""})
+            },
+            "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
+        }
+
+    RETURN_TYPES = ("STRING",)  # Filename
+    FUNCTION = "save_images"
+
+    OUTPUT_NODE = True
+    RESULT_NODE = True
+
+    CATEGORY = "image"
+    custom_name = "Save Custom JPG Node"
+
+    def save_images(self, images, filename_prefix="ComfyUI", subfolder_dir="", prompt=None, extra_pnginfo=None,
+                    quality=95, optimize=True, metadata_string=""):
+        if images is None:
+            images = []
+        if not isinstance(images, (list, tuple, torch.Tensor)):
+            images = [images]
+
+        throw_if_parent_or_root_access(filename_prefix)
+        throw_if_parent_or_root_access(subfolder_dir)
+
+        filename_prefix += self.prefix_append
+        output_dir = os.path.join(self.output_dir, subfolder_dir)
+        filelock_path = os.path.join(output_dir, filename_prefix + ".lock")
+
+        results = []
+        for image in images:
+            if isinstance(image, torch.Tensor):
+                if image.device.type != "cpu":
+                    image = image.cpu()
+                image = 255. * image.numpy()
+                clipped = np.clip(image, 0, 255).astype(np.uint8)
+                if clipped.shape[0] <= 3:
+                    clipped = np.transpose(clipped, (1, 2, 0))
+                img = Image.fromarray(clipped)
+            else:
+                img = PILHandlingHodes.handle_input(image)
+
+            metadata = {}
+            if not args.disable_metadata:
+                if prompt is not None:
+                    metadata["prompt"] = json.dumps(prompt)
+                if extra_pnginfo is not None:
+                    for x in extra_pnginfo:
+                        metadata[x] = json.dumps(extra_pnginfo[x])
+
+            if metadata_string:
+                metadata = {"metadata": metadata_string}
+
+            exif_bytes = None
+            if piexif_loaded:
+                exif_bytes = piexif.dump({
+                    "Exif": {
+                        piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(json.dumps(metadata), encoding="unicode")
+                    },
+                })
+
+            with filelock.FileLock(filelock_path, timeout=10):
+                full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(
+                    filename_prefix, output_dir, img.size[1], img.size[0])
+                counter_len = len(str(len(images)))
+                file = f"{filename}_{str(counter).zfill(max(5, counter_len))}_.jpg"
+
+                with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmpfile:
+                    tmp_path = tmpfile.name
+                    img.save(tmp_path, "JPEG", quality=quality, optimize=optimize)
+
+                if piexif_loaded and exif_bytes:
+                    piexif.insert(exif_bytes, tmp_path)
+
+                final_path = os.path.join(full_output_folder, file)
+                shutil.copy2(tmp_path, final_path)
+                os.remove(tmp_path)
+
+            results.append({
+                "filename": os.path.join(full_output_folder, file),
+                "subfolder": subfolder_dir,
+                "type": self.type
+            })
+
+        return {"ui": {"images": results}, "outputs": {"images": os.path.join(full_output_folder, file).rstrip('.jpg')}}
 
 @fundamental_node
 class SaveImageWebpCustomNode:
