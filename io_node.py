@@ -936,7 +936,7 @@ class ResizeImageResolution:
             raise RuntimeError("Resolution must be positive and at least 256")
         # get ratio
         target_pixels = resolution ** 2
-        ratio = target_pixels / total_pixels
+        ratio = (target_pixels / total_pixels) ** 0.5
         target_width = int(image_width * ratio)
         target_height = int(image_height * ratio)
         return (image.resize((target_width, target_height), ResizeImageResolution.constants[method]),)
