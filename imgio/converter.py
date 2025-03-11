@@ -51,7 +51,7 @@ def handle_rgba_composite(
 def fetch_image_securely(image_url: str,
                         allowed_schemes=('http', 'https'),
                         max_file_size=5_000_000,
-                        request_timeout=5):
+                        request_timeout=30):
     """
     Fetches an image from the given URL securely.
 
