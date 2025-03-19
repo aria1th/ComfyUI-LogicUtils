@@ -3,10 +3,12 @@ import json
 import math
 import numpy as np
 import torch
+
 try:
     import piexif.helper
     import piexif
     from .exif.exif import read_info_from_image_stealth
+
     piexif_loaded = True
 except ImportError:
     piexif_loaded = False
@@ -28,16 +30,19 @@ import tempfile
 fundamental_classes = []
 fundamental_node = node_wrapper(fundamental_classes)
 
+
 @fundamental_node
 class SleepNodeAny:
     FUNCTION = "sleep"
     RETURN_TYPES = (anytype,)
     CATEGORY = "Misc"
     custom_name = "SleepNode"
+
     @staticmethod
     def sleep(interval, inputs):
         time.sleep(interval)
         return (inputs,)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -46,18 +51,22 @@ class SleepNodeAny:
             },
             "optional": {
                 "inputs": (anytype, {"default": 0.0}),
-            }
+            },
         }
+
+
 @fundamental_node
 class SleepNodeImage:
     FUNCTION = "sleep"
     RETURN_TYPES = (anytype,)
     CATEGORY = "Misc"
     custom_name = "Sleep (Image tunnel)"
+
     @staticmethod
     def sleep(interval, image):
         time.sleep(interval)
         return (image,)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -67,15 +76,18 @@ class SleepNodeImage:
             }
         }
 
+
 @fundamental_node
 class ErrorNode:
     FUNCTION = "raise_error"
     RETURN_TYPES = ("STRING",)
     CATEGORY = "Misc"
     custom_name = "ErrorNode"
+
     @staticmethod
-    def raise_error(error_msg = "Error"):
+    def raise_error(error_msg="Error"):
         raise Exception("Error: {}".format(error_msg))
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -84,11 +96,13 @@ class ErrorNode:
             }
         }
 
+
 @fundamental_node
 class CurrentTimestamp:
     """
     Returns the current Unix timestamp or a formatted time string.
     """
+
     def __init__(self):
         pass
 
@@ -104,11 +118,14 @@ class CurrentTimestamp:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "format_string": ("STRING", {
-                    "default": "",
-                    "display": "text",
-                    "comment": "Leave blank for raw timestamp, or use format directives like '%Y-%m-%d %H:%M:%S'"
-                }),
+                "format_string": (
+                    "STRING",
+                    {
+                        "default": "",
+                        "display": "text",
+                        "comment": "Leave blank for raw timestamp, or use format directives like '%Y-%m-%d %H:%M:%S'",
+                    },
+                ),
             }
         }
 
@@ -117,23 +134,27 @@ class CurrentTimestamp:
     CATEGORY = "Logic Gates"
     custom_name = "Current Timestamp"
 
+
 @fundamental_node
 class DebugComboInputNode:
     FUNCTION = "debug_combo_input"
     RETURN_TYPES = ("STRING",)
     CATEGORY = "Misc"
     custom_name = "Debug Combo Input"
+
     @staticmethod
     def debug_combo_input(input1):
         print(input1)
         return (input1,)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "input1": (["0", "1", "2"], { "default": "0" }),
+                "input1": (["0", "1", "2"], {"default": "0"}),
             }
         }
+
 
 # https://github.com/comfyanonymous/ComfyUI/blob/340177e6e85d076ab9e222e4f3c6a22f1fb4031f/custom_nodes/example_node.py.example#L18
 @fundamental_node
@@ -141,6 +162,7 @@ class TextPreviewNode:
     """
     Can't display text but it makes always changed state
     """
+
     FUNCTION = "text_preview"
     RETURN_TYPES = ()
     CATEGORY = "Misc"
@@ -152,29 +174,35 @@ class TextPreviewNode:
         print(text)
         # below does not work, why?
         return {"ui": {"text": str(text)}}
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "text": (anytype,{"default": "text", "type" : "output"}),
+                "text": (anytype, {"default": "text", "type": "output"}),
             }
         }
+
     @classmethod
     def IS_CHANGED(s, *args, **kwargs):
         return float("nan")
+
 
 @fundamental_node
 class ParseExifNode:
     """
     Parses exif data from image
     """
+
     FUNCTION = "parse_exif"
     RETURN_TYPES = ("STRING",)
     CATEGORY = "Misc"
     custom_name = "Parse Exif"
+
     @staticmethod
     def parse_exif(image):
         return (read_info_from_image_stealth(image),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -183,6 +211,7 @@ class ParseExifNode:
             }
         }
 
+
 def throw_if_parent_or_root_access(path):
     if ".." in path or path.startswith("/") or path.startswith("\\"):
         raise RuntimeError("Tried to access parent or root directory")
@@ -190,6 +219,7 @@ def throw_if_parent_or_root_access(path):
         raise RuntimeError("Tried to access home directory")
     if os.path.isabs(path):
         raise RuntimeError("Path cannot be absolute")
+
 
 @fundamental_node
 class SaveImageCustomNode:
@@ -201,33 +231,45 @@ class SaveImageCustomNode:
 
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": 
-                    {"images": ("IMAGE", ),
-                     "filename_prefix": ("STRING", {"default": "ComfyUI"}),
-                     "subfolder_dir": ("STRING", {"default": ""}),
-                     },
-                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
-                }
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "filename_prefix": ("STRING", {"default": "ComfyUI"}),
+                "subfolder_dir": ("STRING", {"default": ""}),
+            },
+            "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
+        }
 
-    RETURN_TYPES = ("STRING",) #Filename
+    RETURN_TYPES = ("STRING",)  # Filename
     FUNCTION = "save_images"
 
     OUTPUT_NODE = True
     RESULT_NODE = True
     CATEGORY = "image"
-    custom_name = "Save Image Custom Node" 
+    custom_name = "Save Image Custom Node"
 
-    def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None):
-        if images is None: # sometimes images is empty
+    def save_images(
+        self,
+        images,
+        filename_prefix="ComfyUI",
+        subfolder_dir="",
+        prompt=None,
+        extra_pnginfo=None,
+    ):
+        if images is None:  # sometimes images is empty
             images = []
         filename_prefix += self.prefix_append
         throw_if_parent_or_root_access(filename_prefix)
         throw_if_parent_or_root_access(subfolder_dir)
         output_dir = os.path.join(self.output_dir, subfolder_dir)
-        full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0])
+        full_output_folder, filename, counter, subfolder, filename_prefix = (
+            folder_paths.get_save_image_path(
+                filename_prefix, output_dir, images[0].shape[1], images[0].shape[0]
+            )
+        )
         results = list()
         for image in images:
-            i = 255. * image.cpu().numpy()
+            i = 255.0 * image.cpu().numpy()
             img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
             metadata = None
             if not args.disable_metadata:
@@ -239,15 +281,18 @@ class SaveImageCustomNode:
                         metadata.add_text(x, json.dumps(extra_pnginfo[x]))
 
             file = f"{filename}_{counter:05}_.png"
-            img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=self.compress_level)
-            results.append({
-                "filename": file,
-                "subfolder": subfolder,
-                "type": self.type
-            })
+            img.save(
+                os.path.join(full_output_folder, file),
+                pnginfo=metadata,
+                compress_level=self.compress_level,
+            )
+            results.append(
+                {"filename": file, "subfolder": subfolder, "type": self.type}
+            )
             counter += 1
 
-        return { "ui": { "images": results }, "outputs": { "images": file.rstrip('.png') } }
+        return {"ui": {"images": results}, "outputs": {"images": file.rstrip(".png")}}
+
 
 @fundamental_node
 class SaveTextCustomNode:
@@ -259,41 +304,41 @@ class SaveTextCustomNode:
 
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": 
-                    {"text": (anytype, ),
-                     "filename_prefix": ("STRING", {"default": "ComfyUI"}),
-                     "subfolder_dir": ("STRING", {"default": ""}),
-                     "filename": ("STRING", {"default": ""}),
-                     },
-                }
-    
-    RETURN_TYPES = ("STRING",) #Filename
+        return {
+            "required": {
+                "text": (anytype,),
+                "filename_prefix": ("STRING", {"default": "ComfyUI"}),
+                "subfolder_dir": ("STRING", {"default": ""}),
+                "filename": ("STRING", {"default": ""}),
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)  # Filename
     FUNCTION = "save_text"
     custom_name = "Save Text Custom Node"
     CATEGORY = "text"
     RESULT_NODE = True
     OUTPUT_NODE = True
-    
-    def save_text(self, text, filename_prefix="ComfyUI",subfolder_dir="",filename=""):
+
+    def save_text(self, text, filename_prefix="ComfyUI", subfolder_dir="", filename=""):
         text = str(text)
         throw_if_parent_or_root_access(filename_prefix)
         throw_if_parent_or_root_access(subfolder_dir)
-        assert len(text) > 0 and len(filename) > 0, "Text and filename must be non-empty"
+        assert (
+            len(text) > 0 and len(filename) > 0
+        ), "Text and filename must be non-empty"
         filename_prefix += self.prefix_append
         output_dir = os.path.join(self.output_dir, subfolder_dir)
         filename_merged = filename_prefix + filename + ".txt"
-        full_output_folder, subfolder, actual_filename = output_dir, "", filename_merged 
+        full_output_folder, subfolder, actual_filename = output_dir, "", filename_merged
         results = list()
         file = actual_filename
         with open(os.path.join(full_output_folder, file), "w") as f:
             f.write(text)
-        results.append({
-            "filename": file,
-            "subfolder": subfolder,
-            "type": self.type
-        })
+        results.append({"filename": file, "subfolder": subfolder, "type": self.type})
 
-        return { "ui": { "texts": results }, "outputs": { "images": file.rstrip('.txt') } }
+        return {"ui": {"texts": results}, "outputs": {"images": file.rstrip(".txt")}}
+
 
 @fundamental_node
 class DumpTextJsonlNode:
@@ -304,6 +349,7 @@ class DumpTextJsonlNode:
     For concurrency safety, this node uses filelock to block
     concurrent writes to the same file.
     """
+
     FUNCTION = "dump_text_jsonl"
     RETURN_TYPES = ("STRING",)  # We return the filename for convenience
     CATEGORY = "text"
@@ -319,12 +365,12 @@ class DumpTextJsonlNode:
     @classmethod
     def INPUT_TYPES(cls):
         """
-        text can be a single string or a list of strings. 
+        text can be a single string or a list of strings.
         If it's a list, each item is appended as a separate line.
         """
         return {
             "required": {
-                "text": (anytype, ),  # Single string or list of strings
+                "text": (anytype,),  # Single string or list of strings
                 "filename_prefix": ("STRING", {"default": "ComfyUI"}),
                 "subfolder_dir": ("STRING", {"default": ""}),
                 "filename": ("STRING", {"default": "dump.jsonl"}),
@@ -369,11 +415,7 @@ class DumpTextJsonlNode:
 
         # Return data for UI usage
         results = [
-            {
-                "filename": final_filename,
-                "subfolder": subfolder_dir,
-                "type": self.type
-            }
+            {"filename": final_filename, "subfolder": subfolder_dir, "type": self.type}
         ]
         return {
             "ui": {"texts": results},
@@ -569,10 +611,14 @@ class ConcatTwoImagesNode:
         # Convert input to PIL images (RGBA to preserve alpha if needed)
         pilA = PILHandlingHodes.handle_input(imageA)
         if isinstance(pilA, list):
-            raise RuntimeError("Expected a single image for imageA, grid only supports two images")
+            raise RuntimeError(
+                "Expected a single image for imageA, grid only supports two images"
+            )
         pilB = PILHandlingHodes.handle_input(imageB)
         if isinstance(pilB, list):
-            raise RuntimeError("Expected a single image for imageB, grid only supports two images")
+            raise RuntimeError(
+                "Expected a single image for imageB, grid only supports two images"
+            )
         if direction == "horizontal":
             # We want to unify heights
             max_h = max(pilA.height, pilB.height)
@@ -642,6 +688,7 @@ class ConcatTwoImagesNode:
 
         return (out,)
 
+
 @fundamental_node
 class SaveCustomJPGNode:
     def __init__(self):
@@ -660,7 +707,7 @@ class SaveCustomJPGNode:
             "optional": {
                 "quality": ("INT", {"default": 95}),
                 "optimize": ("BOOLEAN", {"default": True}),
-                "metadata_string": ("STRING", {"default": ""})
+                "metadata_string": ("STRING", {"default": ""}),
             },
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
@@ -674,8 +721,17 @@ class SaveCustomJPGNode:
     CATEGORY = "image"
     custom_name = "Save Custom JPG Node"
 
-    def save_images(self, images, filename_prefix="ComfyUI", subfolder_dir="", prompt=None, extra_pnginfo=None,
-                    quality=95, optimize=True, metadata_string=""):
+    def save_images(
+        self,
+        images,
+        filename_prefix="ComfyUI",
+        subfolder_dir="",
+        prompt=None,
+        extra_pnginfo=None,
+        quality=95,
+        optimize=True,
+        metadata_string="",
+    ):
         if images is None:
             images = []
         if not isinstance(images, (list, tuple, torch.Tensor)):
@@ -693,7 +749,7 @@ class SaveCustomJPGNode:
             if isinstance(image, torch.Tensor):
                 if image.device.type != "cpu":
                     image = image.cpu()
-                image = 255. * image.numpy()
+                image = 255.0 * image.numpy()
                 clipped = np.clip(image, 0, 255).astype(np.uint8)
                 if clipped.shape[0] <= 3:
                     clipped = np.transpose(clipped, (1, 2, 0))
@@ -714,19 +770,28 @@ class SaveCustomJPGNode:
 
             exif_bytes = None
             if piexif_loaded:
-                exif_bytes = piexif.dump({
-                    "Exif": {
-                        piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(json.dumps(metadata), encoding="unicode")
-                    },
-                })
+                exif_bytes = piexif.dump(
+                    {
+                        "Exif": {
+                            piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(
+                                json.dumps(metadata), encoding="unicode"
+                            )
+                        },
+                    }
+                )
 
             with filelock.FileLock(filelock_path, timeout=10):
-                full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(
-                    filename_prefix, output_dir, img.size[1], img.size[0])
+                full_output_folder, filename, counter, subfolder, filename_prefix = (
+                    folder_paths.get_save_image_path(
+                        filename_prefix, output_dir, img.size[1], img.size[0]
+                    )
+                )
                 counter_len = len(str(len(images)))
                 file = f"{filename}_{str(counter).zfill(max(5, counter_len))}_.jpg"
 
-                with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmpfile:
+                with tempfile.NamedTemporaryFile(
+                    suffix=".jpg", delete=False
+                ) as tmpfile:
                     tmp_path = tmpfile.name
                     img.save(tmp_path, "JPEG", quality=quality, optimize=optimize)
 
@@ -737,13 +802,21 @@ class SaveCustomJPGNode:
                 shutil.copy2(tmp_path, final_path)
                 os.remove(tmp_path)
 
-            results.append({
-                "filename": os.path.join(full_output_folder, file),
-                "subfolder": subfolder_dir,
-                "type": self.type
-            })
+            results.append(
+                {
+                    "filename": os.path.join(full_output_folder, file),
+                    "subfolder": subfolder_dir,
+                    "type": self.type,
+                }
+            )
 
-        return {"ui": {"images": results}, "outputs": {"images": os.path.join(full_output_folder, file).rstrip('.jpg')}}
+        return {
+            "ui": {"images": results},
+            "outputs": {
+                "images": os.path.join(full_output_folder, file).rstrip(".jpg")
+            },
+        }
+
 
 @fundamental_node
 class SaveImageWebpCustomNode:
@@ -754,26 +827,45 @@ class SaveImageWebpCustomNode:
 
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": 
-                    {"images": ("IMAGE", ),
-                     "filename_prefix": ("STRING", {"default": "ComfyUI"}),
-                     "subfolder_dir": ("STRING", {"default": ""}),
-                     },
-                 "optional": {"quality": ("INT", {"default": 100}), "lossless": ("BOOLEAN", {"default": False}), "compression": ("INT", {"default": 4}), "optimize": ("BOOLEAN", {"default": False}), "metadata_string": ("STRING", {"default": ""})},
-                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
-                }
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "filename_prefix": ("STRING", {"default": "ComfyUI"}),
+                "subfolder_dir": ("STRING", {"default": ""}),
+            },
+            "optional": {
+                "quality": ("INT", {"default": 100}),
+                "lossless": ("BOOLEAN", {"default": False}),
+                "compression": ("INT", {"default": 4}),
+                "optimize": ("BOOLEAN", {"default": False}),
+                "metadata_string": ("STRING", {"default": ""}),
+            },
+            "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
+        }
 
-    RETURN_TYPES = ("STRING",) #Filename
+    RETURN_TYPES = ("STRING",)  # Filename
     FUNCTION = "save_images"
 
     OUTPUT_NODE = True
     RESULT_NODE = True
 
     CATEGORY = "image"
-    custom_name = "Save Image Webp Node" 
+    custom_name = "Save Image Webp Node"
 
-    def save_images(self, images, filename_prefix="ComfyUI",subfolder_dir="", prompt=None, extra_pnginfo=None, quality=100, lossless=False, compression=4, optimize=False, metadata_string=""):
-        if images is None: # sometimes images is empty
+    def save_images(
+        self,
+        images,
+        filename_prefix="ComfyUI",
+        subfolder_dir="",
+        prompt=None,
+        extra_pnginfo=None,
+        quality=100,
+        lossless=False,
+        compression=4,
+        optimize=False,
+        metadata_string="",
+    ):
+        if images is None:  # sometimes images is empty
             images = []
         if not isinstance(images, (list, tuple, torch.Tensor)):
             images = [images]
@@ -782,16 +874,20 @@ class SaveImageWebpCustomNode:
         filename_prefix += self.prefix_append
         output_dir = os.path.join(self.output_dir, subfolder_dir)
         filelock_path = os.path.join(output_dir, filename_prefix + ".lock")
-        
+
         results = list()
         for image in images:
             if isinstance(image, torch.Tensor):
                 if image.device.type != "cpu":
                     image = image.cpu()
-                image = 255. * image.numpy()
+                image = 255.0 * image.numpy()
                 clipped = np.clip(image, 0, 255).astype(np.uint8)
-                if clipped.shape[0] <= 3:
-                    clipped = np.transpose(clipped, (1, 2, 0)) #[1216, 832, 3]
+                if clipped.shape[0] == 3:
+                    clipped = np.transpose(clipped, (1, 2, 0))  # [1216, 832, 3]
+                # if len(shape) is 4 and first dimension is 1, remove it (batch size)
+                if clipped.shape[0] == 1 and len(clipped.shape) == 4:
+                    clipped = clipped[0]
+                # print(clipped.shape)
                 img = Image.fromarray(clipped)
             else:
                 img = PILHandlingHodes.handle_input(image)
@@ -803,37 +899,65 @@ class SaveImageWebpCustomNode:
                 if extra_pnginfo is not None:
                     for x in extra_pnginfo:
                         metadata[x] = json.dumps(extra_pnginfo[x])
-            if metadata_string:# override metadata
+            if metadata_string:  # override metadata
                 metadata = {}
-                metadata["metadata"]= metadata_string
+                metadata["metadata"] = metadata_string
             if piexif_loaded:
-                exif_bytes = piexif.dump({
-                    "Exif": {
-                        piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(json.dumps(metadata) or "", encoding="unicode")
-                    },
-                })
-            
-            with filelock.FileLock(filelock_path, timeout=10): # timeout 10 seconds should be enough for most cases
-                full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, img.size[1], img.size[0])
-                counter_len = len(str(len(images))) # for padding
-                #file = f"{filename}_{counter:05}_.webp"
+                exif_bytes = piexif.dump(
+                    {
+                        "Exif": {
+                            piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(
+                                json.dumps(metadata) or "", encoding="unicode"
+                            )
+                        },
+                    }
+                )
+
+            with filelock.FileLock(
+                filelock_path, timeout=10
+            ):  # timeout 10 seconds should be enough for most cases
+                full_output_folder, filename, counter, subfolder, filename_prefix = (
+                    folder_paths.get_save_image_path(
+                        filename_prefix, output_dir, img.size[1], img.size[0]
+                    )
+                )
+                counter_len = len(str(len(images)))  # for padding
+                # file = f"{filename}_{counter:05}_.webp"
                 file = f"{filename}_{str(counter).zfill(max(5, counter_len))}_.webp"
-                with tempfile.NamedTemporaryFile(suffix=".webp", delete=False) as tmpfile:
+                with tempfile.NamedTemporaryFile(
+                    suffix=".webp", delete=False
+                ) as tmpfile:
                     tmp_path = tmpfile.name
-                    img.save(tmp_path, "WEBP", pnginfo=metadata, compress_level=compression, quality=quality, lossless=lossless, optimize=optimize)
+                    img.save(
+                        tmp_path,
+                        "WEBP",
+                        pnginfo=metadata,
+                        compress_level=compression,
+                        quality=quality,
+                        lossless=lossless,
+                        optimize=optimize,
+                    )
                 if piexif_loaded:
                     piexif.insert(exif_bytes, tmp_path)
                 final_path = os.path.join(full_output_folder, file)
                 shutil.copy2(tmp_path, final_path)
                 os.remove(tmp_path)
-            
-            results.append({
-                "filename": os.path.join(full_output_folder, file),
-                "subfolder": subfolder_dir,
-                "type": self.type
-            })
 
-        return { "ui": { "images": results }, "outputs": { "images": os.path.join(full_output_folder, file).rstrip('.webp') } }
+            results.append(
+                {
+                    "filename": os.path.join(full_output_folder, file),
+                    "subfolder": subfolder_dir,
+                    "type": self.type,
+                }
+            )
+
+        return {
+            "ui": {"images": results},
+            "outputs": {
+                "images": os.path.join(full_output_folder, file).rstrip(".webp")
+            },
+        }
+
 
 @fundamental_node
 class ComposeRGBAImageFromMask:
@@ -851,6 +975,7 @@ class ComposeRGBAImageFromMask:
     FUNCTION = "compose"
     CATEGORY = "image"
     custom_name = "Compose RGBA Image From Mask"
+
     @staticmethod
     def compose(image, mask, invert):
         if invert:
@@ -864,13 +989,17 @@ class ComposeRGBAImageFromMask:
         if hasattr(mask, "device"):
             mask = mask.cpu()
         # Resize mask to match image dimensions if necessary
-        if image.shape[0] != mask.shape[0] or image.shape[1] != mask.shape[1] or image.shape[2] != mask.shape[2]:
+        if (
+            image.shape[0] != mask.shape[0]
+            or image.shape[1] != mask.shape[1]
+            or image.shape[2] != mask.shape[2]
+        ):
             # Resize mask to match image dimensions
             mask = torch.nn.functional.interpolate(
                 mask.permute(0, 3, 1, 2),
                 size=(image.shape[1], image.shape[2]),
                 mode="bilinear",
-                align_corners=False
+                align_corners=False,
             ).permute(0, 2, 3, 1)
 
         num_channels = image.shape[-1]
@@ -884,23 +1013,26 @@ class ComposeRGBAImageFromMask:
 
         return (rgba_image,)
 
+
 @fundamental_node
 class ResizeImageNode:
     FUNCTION = "resize_image"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Resize Image"
-    
+
     constants = {
         "NEAREST": Image.Resampling.NEAREST,
         "LANCZOS": Image.Resampling.LANCZOS,
         "BICUBIC": Image.Resampling.BICUBIC,
     }
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def resize_image(image, width, height, method):
         image = PILHandlingHodes.handle_input(image)
         return (image.resize((width, height), ResizeImageNode.constants[method]),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -912,18 +1044,20 @@ class ResizeImageNode:
             },
         }
 
+
 @fundamental_node
 class ResizeImageResolution:
     FUNCTION = "resize_image_resolution"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Resize Image With Resolution"
-    
+
     constants = {
         "NEAREST": Image.Resampling.NEAREST,
         "LANCZOS": Image.Resampling.LANCZOS,
         "BICUBIC": Image.Resampling.BICUBIC,
     }
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def resize_image_resolution(image, resolution, method):
@@ -935,11 +1069,16 @@ class ResizeImageResolution:
         if resolution < 256:
             raise RuntimeError("Resolution must be positive and at least 256")
         # get ratio
-        target_pixels = resolution ** 2
+        target_pixels = resolution**2
         ratio = (target_pixels / total_pixels) ** 0.5
         target_width = int(image_width * ratio)
         target_height = int(image_height * ratio)
-        return (image.resize((target_width, target_height), ResizeImageResolution.constants[method]),)
+        return (
+            image.resize(
+                (target_width, target_height), ResizeImageResolution.constants[method]
+            ),
+        )
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -949,18 +1088,21 @@ class ResizeImageResolution:
                 "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
             },
         }
+
+
 @fundamental_node
 class ResizeImageEnsuringMultiple:
     FUNCTION = "resize_image_ensuring_multiple"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Resize Image Ensuring W/H Multiple"
-    
+
     constants = {
         "NEAREST": Image.Resampling.NEAREST,
         "LANCZOS": Image.Resampling.LANCZOS,
         "BICUBIC": Image.Resampling.BICUBIC,
     }
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def resize_image_ensuring_multiple(image, multiple, method):
@@ -971,7 +1113,12 @@ class ResizeImageEnsuringMultiple:
             raise RuntimeError("Image has no pixels")
         target_width = (image_width // multiple) * multiple
         target_height = (image_height // multiple) * multiple
-        return (image.resize((target_width, target_height), ResizeImageResolution.constants[method]),)
+        return (
+            image.resize(
+                (target_width, target_height), ResizeImageResolution.constants[method]
+            ),
+        )
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -981,18 +1128,21 @@ class ResizeImageEnsuringMultiple:
                 "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
             },
         }
+
+
 @fundamental_node
 class ResizeImageResolutionIfBigger:
     FUNCTION = "resize_image_resolution_if_bigger"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Resize Image With Resolution If Bigger"
-    
+
     constants = {
         "NEAREST": Image.Resampling.NEAREST,
         "LANCZOS": Image.Resampling.LANCZOS,
         "BICUBIC": Image.Resampling.BICUBIC,
     }
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def resize_image_resolution_if_bigger(image, resolution, method):
@@ -1001,14 +1151,20 @@ class ResizeImageResolutionIfBigger:
         total_pixels = image_width * image_height
         if total_pixels == 0:
             raise RuntimeError("Image has no pixels")
-        if total_pixels <= resolution ** 2:
+        if total_pixels <= resolution**2:
             return (image,)
         # get ratio
-        target_pixels = resolution ** 2
+        target_pixels = resolution**2
         ratio = target_pixels / total_pixels
         target_width = int(image_width * ratio)
         target_height = int(image_height * ratio)
-        return (image.resize((target_width, target_height), ResizeImageResolutionIfBigger.constants[method]),)
+        return (
+            image.resize(
+                (target_width, target_height),
+                ResizeImageResolutionIfBigger.constants[method],
+            ),
+        )
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1018,18 +1174,21 @@ class ResizeImageResolutionIfBigger:
                 "method": (["NEAREST", "LANCZOS", "BICUBIC"],),
             },
         }
+
+
 @fundamental_node
 class ResizeImageResolutionIfSmaller:
     FUNCTION = "resize_image_resolution_if_smaller"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Resize Image With Resolution If Smaller"
-    
+
     constants = {
         "NEAREST": Image.Resampling.NEAREST,
         "LANCZOS": Image.Resampling.LANCZOS,
         "BICUBIC": Image.Resampling.BICUBIC,
     }
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def resize_image_resolution_if_smaller(image, resolution, method):
@@ -1038,14 +1197,20 @@ class ResizeImageResolutionIfSmaller:
         total_pixels = image_width * image_height
         if total_pixels == 0:
             raise RuntimeError("Image has no pixels")
-        if total_pixels >= resolution ** 2:
+        if total_pixels >= resolution**2:
             return (image,)
         # get ratio
-        target_pixels = resolution ** 2
+        target_pixels = resolution**2
         ratio = target_pixels / total_pixels
         target_width = int(image_width * ratio)
         target_height = int(image_height * ratio)
-        return (image.resize((target_width, target_height), ResizeImageResolutionIfSmaller.constants[method]),)
+        return (
+            image.resize(
+                (target_width, target_height),
+                ResizeImageResolutionIfSmaller.constants[method],
+            ),
+        )
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1056,17 +1221,22 @@ class ResizeImageResolutionIfSmaller:
             },
         }
 
+
 @fundamental_node
 class Base64DecodeNode:
     FUNCTION = "base64_decode"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Base64 Decode to Image"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def base64_decode(base64_string):
-        image = PILHandlingHodes.handle_input(base64_string) # automatically converts to PIL image
+        image = PILHandlingHodes.handle_input(
+            base64_string
+        )  # automatically converts to PIL image
         return (image,)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1075,19 +1245,24 @@ class Base64DecodeNode:
             }
         }
 
+
 @fundamental_node
 class ImageFromURLNode:
     FUNCTION = "url_download"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Download Image from URL"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def url_download(url):
-        if not url.startswith("http"): # for security reasons
-            raise RuntimeError("Strict URL check is required, however the URL does not start with http")
-        image = PILHandlingHodes.handle_input(url) # automatically downloads image
+        if not url.startswith("http"):  # for security reasons
+            raise RuntimeError(
+                "Strict URL check is required, however the URL does not start with http"
+            )
+        image = PILHandlingHodes.handle_input(url)  # automatically downloads image
         return (image,)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1096,16 +1271,19 @@ class ImageFromURLNode:
             }
         }
 
+
 @fundamental_node
 class Base64EncodeNode:
     FUNCTION = "base64_encode"
     RETURN_TYPES = ("STRING",)
     CATEGORY = "image"
     custom_name = "Image to Base64 Encode"
+
     @staticmethod
     def base64_encode(image, quality, format, gzip_compress):
         image = PILHandlingHodes.to_base64(image, quality, format, gzip_compress)
         return (image,)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1116,8 +1294,9 @@ class Base64EncodeNode:
                 "quality": ("INT", {"default": 100}),
                 "format": (["PNG", "WEBP", "JPG"], {"default": "PNG"}),
                 "gzip_compress": ("BOOLEAN", {"default": False}),
-            }
+            },
         }
+
 
 @fundamental_node
 class StringToBase64Node:
@@ -1125,9 +1304,11 @@ class StringToBase64Node:
     RETURN_TYPES = ("STRING",)
     CATEGORY = "image"
     custom_name = "String to Base64 Encode"
+
     @staticmethod
     def string_to_base64(string, gzip_compress):
         return (PILHandlingHodes.string_to_base64(string, gzip_compress),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1136,8 +1317,9 @@ class StringToBase64Node:
             },
             "optional": {
                 "gzip_compress": ("BOOLEAN", {"default": False}),
-            }
+            },
         }
+
 
 @fundamental_node
 class Base64ToStringNode:
@@ -1145,9 +1327,11 @@ class Base64ToStringNode:
     RETURN_TYPES = ("STRING",)
     CATEGORY = "image"
     custom_name = "Base64 to String Decode"
+
     @staticmethod
     def base64_to_string(base64_string):
         return (PILHandlingHodes.maybe_gzip_base64_to_string(base64_string),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1156,17 +1340,20 @@ class Base64ToStringNode:
             }
         }
 
+
 @fundamental_node
 class InvertImageNode:
     FUNCTION = "invert_image"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Invert Image"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def invert_image(image):
         image = PILHandlingHodes.handle_input(image)
         return (ImageOps.invert(image),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1175,25 +1362,33 @@ class InvertImageNode:
             }
         }
 
+
 @fundamental_node
 class ResizeScaleImageNode:
     FUNCTION = "resize_scale_image"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Resize Scale Image"
-    
+
     constants = {
         "NEAREST": Image.Resampling.NEAREST,
         "LANCZOS": Image.Resampling.LANCZOS,
         "BICUBIC": Image.Resampling.BICUBIC,
     }
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def resize_scale_image(image, scale, method):
         image = PILHandlingHodes.handle_input(image)
         if scale < 0:
             raise RuntimeError("Scale must be positive")
-        return (image.resize((int(image.width*scale), int(image.height*scale)), ResizeScaleImageNode.constants[method]),)
+        return (
+            image.resize(
+                (int(image.width * scale), int(image.height * scale)),
+                ResizeScaleImageNode.constants[method],
+            ),
+        )
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1204,18 +1399,20 @@ class ResizeScaleImageNode:
             },
         }
 
+
 @fundamental_node
 class ResizeShortestToNode:
     FUNCTION = "resize_shortest_to"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Resize Shortest To"
-    
+
     constants = {
         "NEAREST": Image.Resampling.NEAREST,
         "LANCZOS": Image.Resampling.LANCZOS,
         "BICUBIC": Image.Resampling.BICUBIC,
     }
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def resize_shortest_to(image, size, method):
@@ -1223,9 +1420,20 @@ class ResizeShortestToNode:
         if size < 0:
             raise RuntimeError("Size must be positive")
         if image.width < image.height:
-            return (image.resize((size, int(image.height* size/image.width)), ResizeShortestToNode.constants[method]),)
+            return (
+                image.resize(
+                    (size, int(image.height * size / image.width)),
+                    ResizeShortestToNode.constants[method],
+                ),
+            )
         else:
-            return (image.resize((int(image.width* size/image.height), size), ResizeShortestToNode.constants[method]),)
+            return (
+                image.resize(
+                    (int(image.width * size / image.height), size),
+                    ResizeShortestToNode.constants[method],
+                ),
+            )
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1236,18 +1444,20 @@ class ResizeShortestToNode:
             },
         }
 
+
 @fundamental_node
 class ResizeLongestToNode:
     FUNCTION = "resize_longest_to"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Resize Longest To"
-    
+
     constants = {
         "NEAREST": Image.Resampling.NEAREST,
         "LANCZOS": Image.Resampling.LANCZOS,
         "BICUBIC": Image.Resampling.BICUBIC,
     }
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def resize_longest_to(image, size, method):
@@ -1255,10 +1465,20 @@ class ResizeLongestToNode:
         if size < 0:
             raise RuntimeError("Size must be positive")
         if image.width > image.height:
-            return (image.resize((size, int(image.height* size/image.width)), ResizeLongestToNode.constants[method]),)
+            return (
+                image.resize(
+                    (size, int(image.height * size / image.width)),
+                    ResizeLongestToNode.constants[method],
+                ),
+            )
         else:
-            return (image.resize((int(image.width* size/image.height), size), ResizeLongestToNode.constants[method]),)
-        
+            return (
+                image.resize(
+                    (int(image.width * size / image.height), size),
+                    ResizeLongestToNode.constants[method],
+                ),
+            )
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1276,6 +1496,7 @@ class ConvertGreyscaleNode:
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Convert Greyscale"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def convert_greyscale(image):
@@ -1283,6 +1504,7 @@ class ConvertGreyscaleNode:
         greyscale_image = image.convert("L")
         # 3 channel greyscale image
         return (greyscale_image.convert("RGB"),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1291,17 +1513,20 @@ class ConvertGreyscaleNode:
             }
         }
 
+
 @fundamental_node
 class RotateImageNode:
     FUNCTION = "rotate_image"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Rotate Image"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def rotate_image(image, angle):
         image = PILHandlingHodes.handle_input(image)
         return (image.rotate(angle),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1311,18 +1536,21 @@ class RotateImageNode:
             }
         }
 
+
 @fundamental_node
 class BrightnessNode:
     FUNCTION = "brightness"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Brightness"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def brightness(image, factor):
         image = PILHandlingHodes.handle_input(image)
         enhancer = ImageEnhance.Brightness(image)
         return (enhancer.enhance(factor),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1331,6 +1559,7 @@ class BrightnessNode:
                 "factor": ("FLOAT", {"default": 1.0}),
             }
         }
+
 
 @fundamental_node
 class ContrastNode:
@@ -1338,12 +1567,14 @@ class ContrastNode:
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Contrast"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def contrast(image, factor):
         image = PILHandlingHodes.handle_input(image)
         enhancer = ImageEnhance.Contrast(image)
         return (enhancer.enhance(factor),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1352,6 +1583,7 @@ class ContrastNode:
                 "factor": ("FLOAT", {"default": 1.0}),
             }
         }
+
 
 @fundamental_node
 class SharpnessNode:
@@ -1359,12 +1591,14 @@ class SharpnessNode:
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Sharpness"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def sharpness(image, factor):
         image = PILHandlingHodes.handle_input(image)
         enhancer = ImageEnhance.Sharpness(image)
         return (enhancer.enhance(factor),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1373,6 +1607,7 @@ class SharpnessNode:
                 "factor": ("FLOAT", {"default": 1.0}),
             }
         }
+
 
 @fundamental_node
 class ColorNode:
@@ -1380,12 +1615,14 @@ class ColorNode:
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Color"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def color(image, factor):
         image = PILHandlingHodes.handle_input(image)
         enhancer = ImageEnhance.Color(image)
         return (enhancer.enhance(factor),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1395,17 +1632,20 @@ class ColorNode:
             }
         }
 
+
 @fundamental_node
 class ConvertRGBNode:
     FUNCTION = "convert_rgb"
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Convert RGB"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def convert_rgb(image):
         image = PILHandlingHodes.handle_input(image)
         return (image.convert("RGB"),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1414,17 +1654,117 @@ class ConvertRGBNode:
             }
         }
 
+
+@fundamental_node
+class FFTNode:
+    FUNCTION = "fft_image"
+    RETURN_TYPES = ("IMAGE",)
+    CATEGORY = "image"
+    custom_name = "FFT Image"
+
+    @staticmethod
+    def fft_image(image: Image.Image, mask_radius: int) -> Image.Image:
+        """
+        Applies an FFT-based low-pass filter to an input PIL image.
+
+        Args:
+            image (Image.Image): Input PIL image to filter.
+            mask_radius (int): Radius of the low-pass circular mask.
+
+        Returns:
+            Image.Image: The filtered image as a PIL Image.
+        """
+        # Convert image to numpy array
+        images = PILHandlingHodes.handle_input(image)
+        results = []
+        if isinstance(images, list):
+            for image in images:
+                image_np = np.array(image.convert("RGB"))
+
+                # Compute FFT for each channel and shift to center
+                fft_channels = [
+                    np.fft.fftshift(np.fft.fft2(image_np[:, :, channel]))
+                    for channel in range(3)
+                ]
+
+                # Create low-pass filter mask
+                rows, cols = image_np.shape[:2]
+                crow, ccol = rows // 2, cols // 2
+                mask = np.zeros((rows, cols), dtype=np.uint8)
+                y, x = np.ogrid[-crow : rows - crow, -ccol : cols - ccol]
+                mask_area = x**2 + y**2 <= mask_radius**2
+                mask[mask_area] = 1
+
+                # Apply mask and perform inverse FFT
+                filtered_channels = [
+                    np.abs(np.fft.ifft2(np.fft.ifftshift(channel * mask)))
+                    for channel in fft_channels
+                ]
+
+                # Combine channels and convert back to image format
+                filtered_image_np = np.stack(filtered_channels, axis=-1)
+                filtered_image_np = np.clip(filtered_image_np, 0, 255).astype(np.uint8)
+                results.append(
+                    PILHandlingHodes.handle_output_as_tensor(
+                        Image.fromarray(filtered_image_np)
+                    )
+                )
+            return (results,)
+        else:
+            image_np = np.array(image.convert("RGB"))
+
+            # Compute FFT for each channel and shift to center
+            fft_channels = [
+                np.fft.fftshift(np.fft.fft2(image_np[:, :, channel]))
+                for channel in range(3)
+            ]
+
+            # Create low-pass filter mask
+            rows, cols = image_np.shape[:2]
+            crow, ccol = rows // 2, cols // 2
+            mask = np.zeros((rows, cols), dtype=np.uint8)
+            y, x = np.ogrid[-crow : rows - crow, -ccol : cols - ccol]
+            mask_area = x**2 + y**2 <= mask_radius**2
+            mask[mask_area] = 1
+
+            # Apply mask and perform inverse FFT
+            filtered_channels = [
+                np.abs(np.fft.ifft2(np.fft.ifftshift(channel * mask)))
+                for channel in fft_channels
+            ]
+
+            # Combine channels and convert back to image format
+            filtered_image_np = np.stack(filtered_channels, axis=-1)
+            filtered_image_np = np.clip(filtered_image_np, 0, 255).astype(np.uint8)
+            return (
+                PILHandlingHodes.handle_output_as_tensor(
+                    Image.fromarray(filtered_image_np)
+                ),
+            )
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "mask_radius": ("INT", {"default": 50}),
+            }
+        }
+
+
 @fundamental_node
 class GetImageInfoNode:
-    FUNCTION="get_image_info"
-    RETURN_TYPES=("WIDTH", "HEIGHT", "TOTAL_PIXELS")
-    CATEGORY="image"
-    custom_name="Get Image Info"
+    FUNCTION = "get_image_info"
+    RETURN_TYPES = ("WIDTH", "HEIGHT", "TOTAL_PIXELS")
+    CATEGORY = "image"
+    custom_name = "Get Image Info"
+
     @staticmethod
     def get_image_info(image):
         image = PILHandlingHodes.handle_input(image)
         width, height = image.size
         return (width, height, width * height)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1440,11 +1780,13 @@ class ThresholdNode:
     RETURN_TYPES = ("IMAGE",)
     CATEGORY = "image"
     custom_name = "Threshold image with value"
+
     @staticmethod
     @PILHandlingHodes.output_wrapper
     def threshold(image, threshold):
         image = PILHandlingHodes.handle_input(image)
         return (image.point(lambda p: p > threshold and 255),)
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -1453,6 +1795,7 @@ class ThresholdNode:
                 "threshold": ("INT", {"default": 128}),
             }
         }
+
 
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(fundamental_classes)
 validate(fundamental_classes)
