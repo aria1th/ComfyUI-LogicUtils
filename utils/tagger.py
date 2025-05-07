@@ -4,6 +4,18 @@ try:
 except ImportError:
     def get_wd14_tags(image_path):
         raise Exception("Tagger feature not available, please install dghs-imgutils")
+    tagger_model_names = {
+        "EVA02_Large": None,
+        "ViT_Large": None,
+        "SwinV2": None,
+        "ConvNext": None,
+        "ConvNextV2": None,
+        "ViT": None,
+        "MOAT": None,
+        "SwinV2_v3": None,
+        "ConvNext_v3": None,
+        "ViT_v3": None,
+    }
 from typing import Union
 from PIL import Image
 
