@@ -839,6 +839,7 @@ class SaveImageWebpCustomNode:
                 "compression": ("INT", {"default": 4}),
                 "optimize": ("BOOLEAN", {"default": False}),
                 "metadata_string": ("STRING", {"default": ""}),
+                "optional_additional_metadata": ("STRING", {"default": ""}),
             },
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
@@ -864,6 +865,7 @@ class SaveImageWebpCustomNode:
         compression=4,
         optimize=False,
         metadata_string="",
+        optional_additional_metadata="",
     ):
         if images is None:  # sometimes images is empty
             images = []
@@ -902,6 +904,8 @@ class SaveImageWebpCustomNode:
             if metadata_string:  # override metadata
                 metadata = {}
                 metadata["metadata"] = metadata_string
+            if optional_additional_metadata:
+                metadata["optional_additional_metadata"] = optional_additional_metadata
             if piexif_loaded:
                 exif_bytes = piexif.dump(
                     {
