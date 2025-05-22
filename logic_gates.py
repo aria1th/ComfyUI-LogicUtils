@@ -385,9 +385,9 @@ class ReplaceString:
     def INPUT_TYPES(s):
         return {
         "required": {
-            "String": ("STRING", {"default": ""}),
-            "Regex": ("STRING", {"default": ""}),
-            "ReplaceWith": ("STRING", {"default": ""}),
+            "String": ("STRING", {"default": ""}), # input string
+            "Regex": ("STRING", {"default": ""}), # regex to search for
+            "ReplaceWith": ("STRING", {"default": ""}), # string to replace with
         }
     }
     FUNCTION = "replace"

@@ -4,9 +4,14 @@ from .imgio.converter import PILHandlingHodes
 from .autonode import node_wrapper, get_node_names_mappings, validate
 
 from PIL import Image
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.Random import get_random_bytes
+try:
+    from Crypto.PublicKey import RSA
+    from Crypto.Cipher import AES, PKCS1_OAEP
+    from Crypto.Random import get_random_bytes
+except ImportError:
+    print("Crypto library not found. Please install pycryptodome.")
+    raise
+
 import torch
 from base64 import b64encode, b64decode
 
