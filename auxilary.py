@@ -296,6 +296,31 @@ class GetAllTagsAboveThresholdNode:
                 "model_name": (tagger_keys, {"default": tagger_keys[0]}),
             }
         }
-
+@auxilary_node
+class GetAllTagsExceptCharacterAboveThresholdNode:
+    FUNCTION = "get_tags"
+    RETURN_TYPES = ("STRING",)
+    CATEGORY = "tagger"
+    custom_name = "Get All Tags Above Threshold Except Characters"
+    @staticmethod
+    def get_tags(image, threshold, replace, model_name):
+        image = PILHandlingHodes.handle_input(image)
+        result = get_tags(image, threshold=threshold, replace=replace, model_name=model_name)
+        result_list = []
+        result_list.append(result['rating'])
+        result_list.extend(result['tags'])
+        return (", ".join(result_list), )
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            },
+            "optional": {
+                "threshold": ("FLOAT", {"default": 0.4}),
+                "replace": ("BOOLEAN", {"default": False}),
+                "model_name": (tagger_keys, {"default": tagger_keys[0]}),
+            }
+        }
 CLASS_MAPPINGS, CLASS_NAMES = get_node_names_mappings(auxilary_classes)
 validate(auxilary_classes)
