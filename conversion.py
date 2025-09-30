@@ -10,7 +10,11 @@ conversion_operators = {
     "Int" : int,
     "Float" : float,
     "Boolean" : bool,
-    "String" : str
+    "String" : str,
+    "List" : list,
+    "Tuple" : tuple,
+    "Set" : set,
+    "Dict" : dict,
 }
 def create_class(type_to):
     class_name = "ConvertAny2{}".format(type_to)
@@ -20,15 +24,19 @@ def create_class(type_to):
         CATEGORY = "Conversion"
         custom_name = "Convert to {}".format(type_to)
         @staticmethod
-        def convert(input1):
-            return (conversion_operators[type_to](input1),)
+        def convert(input_1, **kwargs):
+            if not kwargs:
+                return (conversion_operators[type_to](input_1),)
+            else:
+                return (conversion_operators[type_to]([input_1] + list(kwargs.values())),)
+
         @classmethod
         def INPUT_TYPES(cls):
             return {
-            "required": {
-                "input1": (anytype, {"default": 0.0}),
+                "required": {
+                    "input_1": (anytype, {"default": 0.0}),
+                }
             }
-        }
     CustomClass.__name__ = class_name
     node(CustomClass)
     return CustomClass
