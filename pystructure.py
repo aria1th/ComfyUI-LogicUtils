@@ -153,8 +153,9 @@ class DictSetNode(NewPointer):
     def dict_set(py_dict, key, value):
         if not isinstance(py_dict, dict):
             raise ValueError("Input must be a Python dict")
-        py_dict[key] = value
-        return (py_dict,)
+        new_dict = py_dict.copy()
+        new_dict[key] = value
+        return (new_dict,)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -205,8 +206,9 @@ class DictRemoveKeyNode(NewPointer):
     def dict_remove_key(py_dict, key):
         if not isinstance(py_dict, dict):
             raise ValueError("Input must be a Python dict")
-        py_dict.pop(key, None)
-        return (py_dict,)
+        new_dict = py_dict.copy()
+        new_dict.pop(key, None)
+        return (new_dict,)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -220,7 +222,7 @@ class DictRemoveKeyNode(NewPointer):
 @fundamental_node
 class DictMergeNode(NewPointer):
     """
-    Merges two dictionaries. 
+    Merges two dictionaries.
     If there are duplicate keys, the second dict's values overwrite the first.
     Returns a new dictionary (or modifies the first in place, see below).
     """
@@ -234,8 +236,9 @@ class DictMergeNode(NewPointer):
         if not isinstance(dict_a, dict) or not isinstance(dict_b, dict):
             raise ValueError("Both inputs must be Python dicts")
         if in_place:
-            dict_a.update(dict_b)
-            return (dict_a,)
+            new_dict = dict_a.copy()
+            new_dict.update(dict_b)
+            return (new_dict,)
         else:
             merged = {**dict_a, **dict_b}
             return (merged,)
@@ -575,8 +578,9 @@ class ListAppendNode(NewPointer):
     def list_append(py_list, item):
         if not isinstance(py_list, list):
             raise ValueError("Input must be a Python list")
-        py_list.append(item)
-        return (py_list,)
+        new_list = py_list.copy()
+        new_list.append(item)
+        return (new_list,)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -629,9 +633,10 @@ class ListRemoveNode(NewPointer):
     def list_remove(py_list, item):
         if not isinstance(py_list, list):
             raise ValueError("Input must be a Python list")
-        if item in py_list:
-            py_list.remove(item)
-        return (py_list,)
+        new_list = py_list.copy()
+        if item in new_list:
+            new_list.remove(item)
+        return (new_list,)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -645,7 +650,7 @@ class ListRemoveNode(NewPointer):
 @fundamental_node
 class ListPopNode(NewPointer):
     """
-    Pop an item from the list by index. 
+    Pop an item from the list by index.
     Returns (popped_item, updated_list).
     """
     FUNCTION = "list_pop"
@@ -659,8 +664,9 @@ class ListPopNode(NewPointer):
             raise ValueError("Input must be a Python list")
         if len(py_list) == 0:
             raise IndexError("Cannot pop from an empty list")
-        popped = py_list.pop(index)
-        return (popped, py_list)
+        new_list = py_list.copy()
+        popped = new_list.pop(index)
+        return (popped, new_list)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -688,8 +694,9 @@ class ListInsertNode(NewPointer):
     def list_insert(py_list, index, item):
         if not isinstance(py_list, list):
             raise ValueError("Input must be a Python list")
-        py_list.insert(index, item)
-        return (py_list,)
+        new_list = py_list.copy()
+        new_list.insert(index, item)
+        return (new_list,)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -715,8 +722,9 @@ class ListExtendNode(NewPointer):
     def list_extend(list_a, list_b):
         if not isinstance(list_a, list) or not isinstance(list_b, list):
             raise ValueError("Both inputs must be Python lists")
-        list_a.extend(list_b)
-        return (list_a,)
+        new_list = list_a.copy()
+        new_list.extend(list_b)
+        return (new_list,)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -820,8 +828,9 @@ class SetAddNode(NewPointer):
     def set_add(py_set, item):
         if not isinstance(py_set, set):
             raise ValueError("Input must be a Python set")
-        py_set.add(item)
-        return (py_set,)
+        new_set = py_set.copy()
+        new_set.add(item)
+        return (new_set,)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -846,8 +855,9 @@ class SetRemoveNode(NewPointer):
     def set_remove(py_set, item):
         if not isinstance(py_set, set):
             raise ValueError("Input must be a Python set")
-        py_set.discard(item)
-        return (py_set,)
+        new_set = py_set.copy()
+        new_set.discard(item)
+        return (new_set,)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -972,8 +982,9 @@ class SetClearNode(NewPointer):
     def set_clear(py_set):
         if not isinstance(py_set, set):
             raise ValueError("Input must be a Python set")
-        py_set.clear()
-        return (py_set,)
+        new_set = py_set.copy()
+        new_set.clear()
+        return (new_set,)
 
     @classmethod
     def INPUT_TYPES(cls):
