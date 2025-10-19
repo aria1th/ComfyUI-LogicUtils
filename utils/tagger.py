@@ -39,5 +39,7 @@ def get_tags(image_path:Union[str, Image.Image], threshold:float = 0.4, replace:
         result['tags'] = [replace_underscore(tag) for tag in result['tags']]
         result['chars'] = [replace_underscore(tag) for tag in result['chars']]
     return result
-
-tagger_keys = list(tagger_model_names.keys())
+try:
+    tagger_keys = list(tagger_model_names.keys())
+except NameError:
+    tagger_keys = []

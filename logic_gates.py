@@ -315,7 +315,7 @@ class LogicGateOr:
     CATEGORY = "Logic Gates"
     custom_name = "AOrBGate"
     def or_(self, input1, input2):
-        return (True if input1 and input2 else False,)
+        return (True if input1 or input2 else False,)
 @node
 class LogicGateEither:
     """
