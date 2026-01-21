@@ -1,6 +1,8 @@
 import base64
 import json
 import math
+import random
+from pathlib import Path
 import numpy as np
 import torch
 
@@ -354,6 +356,35 @@ class SaveTextCustomNode:
         results.append({"filename": file, "subfolder": subfolder, "type": self.type})
 
         return {"ui": {"texts": results}, "outputs": {"images": file.rstrip(".txt")}}
+
+
+@fundamental_node
+class CommaRejoinNode:
+    FUNCTION = "comma_rejoin"
+    RETURN_TYPES = ("STRING",)
+    CATEGORY = "text"
+    custom_name = "Comma Rejoin"
+
+    @staticmethod
+    def comma_rejoin(text, split_separator=",", join_separator=", "):
+        # Split (by comma or given separator), strip items, then join using the
+        # join separator verbatim (e.g. ", ").
+        parts = str(text).split(split_separator) if split_separator else [str(text)]
+        stripped = [part.strip() for part in parts]
+        stripped = [part for part in stripped if part != ""]
+        return (join_separator.join(stripped),)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "text": ("STRING", {"default": ""}),
+            },
+            "optional": {
+                "split_separator": ("STRING", {"default": ","}),
+                "join_separator": ("STRING", {"default": ", "}),
+            },
+        }
 
 
 @fundamental_node
@@ -1297,6 +1328,74 @@ class ImageFromURLNode:
             "required": {
                 "url": ("STRING",),
             }
+        }
+
+
+@fundamental_node
+class RandomImageFromFolderNode:
+    FUNCTION = "random_image_from_folder"
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("image", "path")
+    CATEGORY = "image"
+    custom_name = "Random Image From Folder"
+
+    @classmethod
+    def IS_CHANGED(cls, *args, **kwargs):
+        return float("nan")
+
+    @staticmethod
+    @PILHandlingHodes.output_wrapper
+    def random_image_from_folder(folder, extension, recursive, seed=0):
+        folder = str(folder).strip()
+        if not folder:
+            raise ValueError("folder must be a non-empty path")
+
+        folder_path = Path(folder).expanduser()
+        if not folder_path.is_dir():
+            raise ValueError(f"folder is not a directory: {folder_path}")
+
+        ext = str(extension).strip().lower().lstrip(".")
+        if ext == "all":
+            extensions = {".jpg", ".jpeg", ".png", ".webp"}
+        elif ext == "jpg":
+            extensions = {".jpg", ".jpeg"}
+        else:
+            extensions = {f".{ext}"}
+
+        candidates = []
+        if recursive:
+            for suffix in extensions:
+                candidates.extend(folder_path.rglob(f"*{suffix}"))
+        else:
+            for suffix in extensions:
+                candidates.extend(folder_path.glob(f"*{suffix}"))
+
+        candidates = [p for p in candidates if p.is_file()]
+        if not candidates:
+            raise FileNotFoundError(
+                f"No images found in '{folder_path}' with extension '{extension}'"
+            )
+
+        candidates = sorted(set(candidates), key=lambda p: str(p).lower())
+        rng = random.Random(seed)
+        chosen = candidates[rng.randrange(len(candidates))]
+
+        with Image.open(chosen) as img:
+            img = img.convert("RGB")
+
+        return (img, str(chosen))
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "folder": ("STRING", {"default": ""}),
+                "extension": (["all", "jpg", "png", "webp"], {"default": "all"}),
+                "recursive": ("BOOLEAN", {"default": True}),
+            },
+            "optional": {
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2**63 - 1}),
+            },
         }
 
 
