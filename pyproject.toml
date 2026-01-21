@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-logicutils"
 description = "Logical Utils (compare, string, boolean operations) for ComfyUI"
-version = "1.7.2"
+version = "1.7.3"
 license = "MIT"
 
 [project.urls]
@@ -12,3 +12,4 @@ Repository = "https://github.com/aria1th/ComfyUI-LogicUtils"
 PublisherId = "angelbottomless"
 DisplayName = "ComfyUI-LogicUtils"
 Icon = ""
+
