@@ -32,9 +32,9 @@ def process_wrap(cmd_str, cwd=None, handler=None):
     return process.wait()
 
 if "python_embeded" in sys.executable or "python_embedded" in sys.executable: #standalone python version
-    pip_install = [sys.executable, '-s', '-m', 'pip', 'install', "-U"]
+    pip_install = [sys.executable, '-s', '-m', 'pip', 'install', "-U", "--default-timeout=1000"]
 else:
-    pip_install = [sys.executable, '-m', 'pip', 'install', "-U"]
+    pip_install = [sys.executable, '-m', 'pip', 'install', "-U", "--default-timeout=1000"]
 
 def _imgutils_install_candidates() -> list[str]:
     """
