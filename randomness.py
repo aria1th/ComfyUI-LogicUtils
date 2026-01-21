@@ -175,7 +175,7 @@ class UniformRandomFloat(RandomGuaranteedClass):
         pass
     def generate(self, min_val, max_val, decimal_places, seed=0):
         if min_val > max_val:
-            return min_val
+            return (min_val,)
         instance = random.Random(seed)
         value = instance.uniform(min_val, max_val)
         # prune to decimal places - 0 = int, 1 = 1 decimal place,...
@@ -207,7 +207,7 @@ class TriangularRandomFloat(RandomGuaranteedClass):
         pass
     def generate(self, low, high, mode, seed=0):
         if low > high:
-            return low
+            return (low,)
         instance = random.Random(seed)
         value = instance.triangular(low, high, mode)
         return (value,)
@@ -377,7 +377,7 @@ class UniformRandomInt(RandomGuaranteedClass):
         pass
     def generate(self, min_val, max_val, seed=0):
         if min_val > max_val:
-            return min_val
+            return (min_val,)
         instance = random.Random(seed)
         value = instance.randint(min_val, max_val)
         #print(f"Selected {value} from {min_val} to {max_val}")
@@ -635,7 +635,7 @@ class CounterFloat(RandomGuaranteedClass):
                 "start": ("FLOAT", { "default": 0.0, "min": -(2**63-1), "max": (2**63-1), "step": 1.0, "display": "number" }),
             },
             "optional": {
-                "reset": ("BOOLEAN"),
+                "reset": ("BOOLEAN", {"default": False}),
                 "step": ("FLOAT", { "default": 1.0, "min": -(2**63-1), "max": (2**63-1), "step": 1.0, "display": "number" }),
             },
         }
@@ -651,7 +651,7 @@ class YieldableIteratorString(RandomGuaranteedClass):
     If reset is True, then it starts from the beginning
     """
     def __init__(self):
-        self.index = 0
+        self.index = -1
     def generate(self, input_string, separator, reset):
         choices = input_string.split(separator)
         if reset:
@@ -668,7 +668,7 @@ class YieldableIteratorString(RandomGuaranteedClass):
             "required": {
                 "input_string": ("STRING", { "default": "a$b$c", "display": "text" }),
                 "separator": ("STRING", { "default": "$", "display": "text" }),
-                "reset": ("BOOLEAN"),
+                "reset": ("BOOLEAN", {"default": False}),
             },
         }
     RETURN_TYPES = ("STRING",)
@@ -692,11 +692,11 @@ class YieldableIteratorInt(RandomGuaranteedClass):
         if reset:
             self.iterator = None
         if self.iterator is None:
-            self.iterator = range(start, end, step)
+            self.iterator = iter(range(start, end, step))
         try:
             value = next(self.iterator)
         except StopIteration:
-            self.iterator = range(start, end, step)
+            self.iterator = iter(range(start, end, step))
             value = next(self.iterator)
         return (value,)
     @classmethod
@@ -706,7 +706,7 @@ class YieldableIteratorInt(RandomGuaranteedClass):
                 "start": ("INT", { "default": 0, "min": -(2**63-1), "max": (2**63-1), "step": 1, "display": "number" }),
                 "end": ("INT", { "default": 10, "min": -(2**63-1), "max": (2**63-1), "step": 1, "display": "number" }),
                 "step": ("INT", { "default": 1, "min": -(2**63-1), "max": (2**63-1), "step": 1, "display": "number" }),
-                "reset": ("BOOLEAN"),
+                "reset": ("BOOLEAN", {"default": False}),
             },
         }
 

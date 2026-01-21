@@ -10,7 +10,11 @@ conversion_operators = {
     "Int" : int,
     "Float" : float,
     "Boolean" : bool,
-    "String" : str
+    "String" : str,
+    "Dict": dict,
+    "List": list,
+    "Tuple": tuple,
+    "Set": set,
 }
 def create_class(type_to):
     class_name = "ConvertAny2{}".format(type_to)
@@ -83,9 +87,9 @@ class ConvertComboToString:
     CATEGORY = "Logic Gates"
     custom_name = "Convert Combo to String"
     def convertComboToString(self, combo, separator):
-        if isinstance(combo, (str, float, int, bool)):
-            return (combo,)
-        return (separator.join(combo),)
+        if isinstance(combo, (list, tuple)):
+            return (separator.join(str(item) for item in combo),)
+        return (str(combo),)
 
 for type_to in conversion_operators:
     create_class(type_to)

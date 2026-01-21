@@ -1,4 +1,5 @@
 #https://github.com/ltdrdata/ComfyUI-Impact-Pack/blob/Main/install.py
+import os
 import sys
 import subprocess
 import threading
@@ -36,30 +37,49 @@ else:
     pip_install = [sys.executable, '-m', 'pip', 'install', "-U"]
 
 def initialization():
+    auto_install = os.environ.get("COMFYUI_LOGICUTILS_AUTO_INSTALL", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    if not auto_install:
+        return
+
     try:
         import piexif
-    except ImportError:
+    except Exception:
         run_installation("piexif")
     try:
         import chardet
-    except ImportError:
+    except Exception:
         run_installation("chardet")
     try:
         from imgutils.tagging import get_wd14_tags
-    except ImportError:
-        run_installation("dghs-imgutils[gpu]")
+    except Exception:
+        # dghs-imgutils currently pins numpy<2, which typically won't have wheels for
+        # the latest Python releases right away (e.g. Python 3.13 in ComfyUI portable).
+        if sys.version_info >= (3, 13):
+            print(
+                "Skipping auto-install of dghs-imgutils on Python >= 3.13 "
+                "(tagger nodes will be disabled unless installed manually)."
+            )
+        else:
+            run_installation("dghs-imgutils[gpu]")
     try:
         from Crypto.PublicKey import RSA
-    except ImportError:
+    except Exception:
         run_installation("pycryptodome")
 
 
 def run_installation(pkg_name: str):
     print(f"Installing {pkg_name}...")
-    if process_wrap(pip_install + [pkg_name]) == 0:
-        print(f"Successfully installed {pkg_name}")
-    else:
-        print(f"Failed to install {pkg_name}")
+    try:
+        if process_wrap(pip_install + [pkg_name]) == 0:
+            print(f"Successfully installed {pkg_name}")
+        else:
+            print(f"Failed to install {pkg_name}")
+    except Exception as e:
+        print(f"Failed to install {pkg_name}: {e}")
 
 if __name__ == "__main__":
     initialization()

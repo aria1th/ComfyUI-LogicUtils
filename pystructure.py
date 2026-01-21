@@ -431,7 +431,7 @@ class GlobalVarGetNode(NewPointer):
     CATEGORY = "Data"
     custom_name="Pyobjects/Global Var Get"
 
-    def global_var_get(self, key):
+    def global_var_get(self, key, trigger=None):
         print("GlobalVarGetNode:", GLOBAL_STORAGE)
         return (GLOBAL_STORAGE.get(key, None),)
 
@@ -440,7 +440,12 @@ class GlobalVarGetNode(NewPointer):
         return {
             "required": {
                 "key": ("STRING", {"default": "my_key"}),
-            }
+            },
+            "optional": {
+                # Optional dependency input to force execution ordering.
+                # Connect a Global Var Set output here to guarantee the Set runs first.
+                "trigger": (anytype,),
+            },
         }
 
 @fundamental_node

@@ -1,9 +1,13 @@
 try:
     from imgutils.tagging import get_wd14_tags
     from imgutils.tagging.wd14 import MODEL_NAMES as tagger_model_names
-except ImportError:
-    def get_wd14_tags(image_path):
-        raise Exception("Tagger feature not available, please install dghs-imgutils")
+except Exception as e:
+    _tagger_import_error = e
+
+    def get_wd14_tags(image_path, model_name=None):
+        raise RuntimeError(
+            "Tagger feature not available. Install 'dghs-imgutils' to enable it."
+        ) from _tagger_import_error
     tagger_model_names = {
         "EVA02_Large": None,
         "ViT_Large": None,
@@ -39,7 +43,4 @@ def get_tags(image_path:Union[str, Image.Image], threshold:float = 0.4, replace:
         result['tags'] = [replace_underscore(tag) for tag in result['tags']]
         result['chars'] = [replace_underscore(tag) for tag in result['chars']]
     return result
-try:
-    tagger_keys = list(tagger_model_names.keys())
-except NameError:
-    tagger_keys = []
+tagger_keys = list(tagger_model_names.keys())

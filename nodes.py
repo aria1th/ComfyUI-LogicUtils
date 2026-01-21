@@ -1,13 +1,35 @@
+import os
 
 from .install import initialization
 
-initialization()
+
+def _running_in_comfyui() -> bool:
+    try:
+        import folder_paths  # noqa: F401
+    except Exception:
+        return False
+    return True
+
+
+_IN_COMFYUI = _running_in_comfyui()
+_SKIP_INSTALL = os.environ.get("COMFYUI_LOGICUTILS_SKIP_INSTALL", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+
+if _IN_COMFYUI and not _SKIP_INSTALL:
+    initialization()
 
 from .logic_gates import CLASS_MAPPINGS as LogicMapping, CLASS_NAMES as LogicNames
 from .randomness import CLASS_MAPPINGS as RandomMapping, CLASS_NAMES as RandomNames
 from .conversion import CLASS_MAPPINGS as ConversionMapping, CLASS_NAMES as ConversionNames
 from .math_nodes import CLASS_MAPPINGS as MathMapping, CLASS_NAMES as MathNames
-from .io_node import CLASS_MAPPINGS as IOMapping, CLASS_NAMES as IONames
+if _IN_COMFYUI:
+    from .io_node import CLASS_MAPPINGS as IOMapping, CLASS_NAMES as IONames
+else:
+    IOMapping = {}
+    IONames = {}
 from .auxilary import CLASS_MAPPINGS as AuxilaryMapping, CLASS_NAMES as AuxilaryNames
 from .external import CLASS_MAPPINGS as ExternalMapping, CLASS_NAMES as ExternalNames
 
@@ -41,11 +63,11 @@ try:
     from .pystructure import CLASS_MAPPINGS as PyStructureMapping, CLASS_NAMES as PyStructureNames
     NODE_CLASS_MAPPINGS.update(PyStructureMapping)
     NODE_DISPLAY_NAME_MAPPINGS.update(PyStructureNames)
-except ImportError:
+except Exception:
     pass
 try:
     from .crypto import CLASS_MAPPINGS as SecureMapping, CLASS_NAMES as SecureNames
     NODE_CLASS_MAPPINGS.update(SecureMapping)
     NODE_DISPLAY_NAME_MAPPINGS.update(SecureNames)
-except ImportError:
+except Exception:
     pass

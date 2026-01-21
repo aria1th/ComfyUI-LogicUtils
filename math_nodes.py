@@ -138,9 +138,18 @@ class PowerNode:
     CATEGORY = "Math"
     custom_name = "Power"
     def power(self, input1, power):
-        # validate power with log scale, prevent overflow
-        log_val = math.log(abs(input1), 10)
-        if log_val * power > 100 or log_val == 0:
+        abs_input = abs(input1)
+        # fast paths for values that won't overflow digit-wise
+        if abs_input == 0:
+            if power < 0:
+                raise ZeroDivisionError("0 cannot be raised to a negative power")
+            return (math.pow(input1, power),)
+        if abs_input == 1:
+            return (math.pow(input1, power),)
+
+        # validate power with log10 scale, prevent huge magnitudes
+        log10_abs = math.log10(abs_input)
+        if (log10_abs * power) > 100:
             raise OverflowError("Power is too large, exceeds 100 digits")
         return (math.pow(input1, power),)
 
@@ -284,6 +293,7 @@ class RAMPNode:
     def ramp(self, input1):
         return (max(0, input1),)
 
+@node
 class ModuloNode:
     """
     Returns the modulo of a number
