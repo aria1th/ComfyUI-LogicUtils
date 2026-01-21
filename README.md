@@ -12,5 +12,5 @@ Run from the repo root:
 
 ## Notes
 
-- Auto-install is opt-in via `COMFYUI_LOGICUTILS_AUTO_INSTALL=1`.
-- To force-disable the install hook, set `COMFYUI_LOGICUTILS_SKIP_INSTALL=1`.
+- Auto-install runs when loaded in ComfyUI. To disable it, set `COMFYUI_LOGICUTILS_SKIP_INSTALL=1`.
+- To force CPU/GPU tagger dependency selection, set `COMFYUI_LOGICUTILS_IMGUTILS_VARIANT=cpu` or `COMFYUI_LOGICUTILS_IMGUTILS_VARIANT=gpu`.

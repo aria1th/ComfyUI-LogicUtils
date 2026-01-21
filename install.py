@@ -36,15 +36,30 @@ if "python_embeded" in sys.executable or "python_embedded" in sys.executable: #s
 else:
     pip_install = [sys.executable, '-m', 'pip', 'install', "-U"]
 
-def initialization():
-    auto_install = os.environ.get("COMFYUI_LOGICUTILS_AUTO_INSTALL", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-    }
-    if not auto_install:
-        return
+def _imgutils_install_candidates() -> list[str]:
+    """
+    Decide which dghs-imgutils package variant to install first.
 
+    - `dghs-imgutils[gpu]` includes optional GPU-related dependencies.
+    - If GPU detection fails, default to CPU variant first.
+    """
+    variant = os.environ.get("COMFYUI_LOGICUTILS_IMGUTILS_VARIANT", "").strip().lower()
+    if variant in {"gpu", "cuda"}:
+        return ["dghs-imgutils[gpu]", "dghs-imgutils"]
+    if variant in {"cpu"}:
+        return ["dghs-imgutils", "dghs-imgutils[gpu]"]
+
+    # auto
+    try:
+        import torch
+
+        if getattr(torch, "cuda", None) is not None and torch.cuda.is_available():
+            return ["dghs-imgutils[gpu]", "dghs-imgutils"]
+    except Exception:
+        pass
+    return ["dghs-imgutils", "dghs-imgutils[gpu]"]
+
+def initialization():
     try:
         import piexif
     except Exception:
@@ -56,15 +71,13 @@ def initialization():
     try:
         from imgutils.tagging import get_wd14_tags
     except Exception:
-        # dghs-imgutils currently pins numpy<2, which typically won't have wheels for
-        # the latest Python releases right away (e.g. Python 3.13 in ComfyUI portable).
-        if sys.version_info >= (3, 13):
-            print(
-                "Skipping auto-install of dghs-imgutils on Python >= 3.13 "
-                "(tagger nodes will be disabled unless installed manually)."
-            )
-        else:
-            run_installation("dghs-imgutils[gpu]")
+        for candidate in _imgutils_install_candidates():
+            run_installation(candidate)
+            try:
+                from imgutils.tagging import get_wd14_tags  # noqa: F401
+                break
+            except Exception:
+                continue
     try:
         from Crypto.PublicKey import RSA
     except Exception:
