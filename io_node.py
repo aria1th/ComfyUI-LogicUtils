@@ -22,8 +22,18 @@ from PIL import Image
 from PIL import ImageOps
 from PIL import ImageEnhance
 from PIL.PngImagePlugin import PngInfo
-import folder_paths
-from comfy.cli_args import args
+try:
+    import folder_paths
+except ModuleNotFoundError:
+    folder_paths = None
+try:
+    from comfy.cli_args import args
+except ModuleNotFoundError:
+    # Allow importing this module outside a full ComfyUI install (e.g. unit tests).
+    class _Args:
+        disable_metadata = True
+
+    args = _Args()
 import filelock
 import tempfile
 
@@ -256,8 +266,14 @@ class SaveImageCustomNode:
         prompt=None,
         extra_pnginfo=None,
     ):
-        if images is None:  # sometimes images is empty
-            images = []
+        # `images` can be None or empty in some edge cases.
+        if images is None:
+            return {"ui": {"images": []}, "outputs": {"images": ""}}
+        if isinstance(images, torch.Tensor) and images.shape[0] == 0:
+            return {"ui": {"images": []}, "outputs": {"images": ""}}
+        if isinstance(images, (list, tuple)) and len(images) == 0:
+            return {"ui": {"images": []}, "outputs": {"images": ""}}
+
         filename_prefix += self.prefix_append
         throw_if_parent_or_root_access(filename_prefix)
         throw_if_parent_or_root_access(subfolder_dir)
@@ -733,7 +749,11 @@ class SaveCustomJPGNode:
         metadata_string="",
     ):
         if images is None:
-            images = []
+            return {"ui": {"images": []}, "outputs": {"images": ""}}
+        if isinstance(images, torch.Tensor) and images.shape[0] == 0:
+            return {"ui": {"images": []}, "outputs": {"images": ""}}
+        if isinstance(images, (list, tuple)) and len(images) == 0:
+            return {"ui": {"images": []}, "outputs": {"images": ""}}
         if not isinstance(images, (list, tuple, torch.Tensor)):
             images = [images]
 
@@ -868,7 +888,11 @@ class SaveImageWebpCustomNode:
         optional_additional_metadata="",
     ):
         if images is None:  # sometimes images is empty
-            images = []
+            return {"ui": {"images": []}, "outputs": {"images": ""}}
+        if isinstance(images, torch.Tensor) and images.shape[0] == 0:
+            return {"ui": {"images": []}, "outputs": {"images": ""}}
+        if isinstance(images, (list, tuple)) and len(images) == 0:
+            return {"ui": {"images": []}, "outputs": {"images": ""}}
         if not isinstance(images, (list, tuple, torch.Tensor)):
             images = [images]
         throw_if_parent_or_root_access(filename_prefix)

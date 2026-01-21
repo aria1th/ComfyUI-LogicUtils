@@ -9,25 +9,6 @@ classes = []
 node = node_wrapper(classes)
 
 @node
-class LogicGateCompare:
-    """
-    Returns 1 if input1 > input2, 0 otherwise
-    """
-    RETURN_TYPES = ("BOOLEAN",)
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-        "required": {
-            "input1": (anytype, {"default": 0.0}),
-            "input2": (anytype, {"default": 0.0}),
-        }
-    }
-    FUNCTION = "compareFloat"
-    CATEGORY = "Logic Gates"
-    custom_name = "ABiggerThanB"
-    def compareFloat(self, input1, input2):
-        return (True if input1 > input2 else False,)
-@node
 class LogicGateInvertBasic:
     """
     Inverts 1 to 0 and 0 to 1
@@ -86,7 +67,9 @@ class LogicGateBitwiseShift:
         # validate input2
         if abs(input2) > 32:
             raise ValueError("input2 must be between -32 and 32")
-        return (input1 << input2,)
+        if input2 >= 0:
+            return (input1 << input2,)
+        return (input1 >> abs(input2),)
 @node
 class LogicGateBitwiseAnd:
     """
