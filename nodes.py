@@ -20,6 +20,8 @@ _SKIP_INSTALL = os.environ.get("COMFYUI_LOGICUTILS_SKIP_INSTALL", "").strip().lo
 
 if _IN_COMFYUI and not _SKIP_INSTALL:
     initialization()
+else:
+    print("Skipping ComfyUI-LogicUtils installation.")
 
 from .logic_gates import CLASS_MAPPINGS as LogicMapping, CLASS_NAMES as LogicNames
 from .randomness import CLASS_MAPPINGS as RandomMapping, CLASS_NAMES as RandomNames

@@ -63,15 +63,19 @@ def initialization():
     try:
         import piexif
     except Exception:
+        print("piexif not found, installing...")
         run_installation("piexif")
     try:
         import chardet
     except Exception:
+        print("chardet not found, installing...")
         run_installation("chardet")
     try:
         from imgutils.tagging import get_wd14_tags
     except Exception:
+        print("imgutils not found, installing...")
         for candidate in _imgutils_install_candidates():
+            print(f"Trying to install {candidate}...")
             run_installation(candidate)
             try:
                 from imgutils.tagging import get_wd14_tags  # noqa: F401
@@ -81,8 +85,8 @@ def initialization():
     try:
         from Crypto.PublicKey import RSA
     except Exception:
+        print("pycryptodome not found, installing...")
         run_installation("pycryptodome")
-
 
 def run_installation(pkg_name: str):
     print(f"Installing {pkg_name}...")
