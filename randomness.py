@@ -57,8 +57,8 @@ class DimensionSelectorWithSeedNode:
         return {
             "required": {
                 "resolution": ("INT", {"default": 1024}),
-                "min_ratio": ("FLOAT", {"default": 0.6}),
-                "max_ratio": ("FLOAT", {"default": 1.6}),
+                "min_ratio": ("FLOAT", {"default": 0.6, "step": 0.01}),
+                "max_ratio": ("FLOAT", {"default": 1.6, "step": 0.01}),
                 "multiples": ("INT", {"default": 32}),
                 "seed": ("INT", {"default": 0}),
             }
